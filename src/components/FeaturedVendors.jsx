@@ -1,23 +1,24 @@
 import VendorCard from "./VendorCard";
+import Image from "../assets/img/eventhub-bg.avif";
 
 const vendors = [
   {
     name: "Elite Catering",
     category: "Catering",
     rating: "4.8",
-    image: "https://via.placeholder.com/300",
+    image: { src: Image, alt: "Elite Catering" },
   },
   {
     name: "Flash Photography",
     category: "Photography",
     rating: "4.7",
-    image: "https://via.placeholder.com/300",
+    image: { src: Image, alt: "Flash Photography" },
   },
   {
     name: "Decor Dreams",
     category: "Decoration",
     rating: "4.3",
-    image: "https://via.placeholder.com/300",
+    image: { src: Image, alt: "Decor Dreams" },
   },
 ];
 

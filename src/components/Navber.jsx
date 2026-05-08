@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
 import {
   Sparkles,
   Compass,
@@ -51,17 +52,21 @@ const Navbar = () => {
 
         {/* Action Buttons */}
         <div className='hidden md:flex items-center gap-3'>
-          <button className='px-5 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-full transition-all'>
-            Login
-          </button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className='flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-purple-200 transition-all'
-          >
-            Get Started
-            <ChevronRight size={16} />
-          </motion.button>
+          <Link to='/signin'>
+            <button className='px-5 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-full transition-all'>
+              Login
+            </button>
+          </Link>
+          <Link to='/signup'>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className='flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-purple-200 transition-all'
+            >
+              Get Started
+              <ChevronRight size={16} />
+            </motion.button>
+          </Link>
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -95,12 +100,18 @@ const Navbar = () => {
                 How it Works
               </a>
               <hr className='border-gray-100' />
-              <button className='w-full py-3 text-purple-600 font-bold'>
+              <Link
+                to='/signin'
+                className='w-full py-3 text-purple-600 font-bold'
+              >
                 Login
-              </button>
-              <button className='w-full bg-purple-600 text-white py-3 rounded-xl font-bold'>
+              </Link>
+              <Link
+                to='/signup'
+                className='w-full bg-purple-600 text-white py-3 rounded-xl font-bold'
+              >
                 Sign Up
-              </button>
+              </Link>
             </div>
           </motion.div>
         )}
