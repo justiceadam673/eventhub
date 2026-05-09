@@ -178,21 +178,26 @@ const Signup = () => {
             </div>
 
             {/* Create Button */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className='w-full bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-purple-100 flex items-center justify-center gap-2 mt-8'
-            >
-              Create Account
-              <ChevronRight size={20} />
-            </motion.button>
+            <Link to={"/dashboard"}>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className='w-full bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-purple-100 flex items-center justify-center gap-2 mt-8'
+              >
+                Create Account
+                <ChevronRight size={20} />
+              </motion.button>
+            </Link>
           </form>
 
           {/* Footer Links */}
           <div className='mt-10 text-center'>
             <p className='text-gray-500 font-medium'>
               Already have an account?{" "}
-              <Link to='/signin' className='text-purple-600 font-bold hover:underline underline-offset-4'>
+              <Link
+                to='/signin'
+                className='text-purple-600 font-bold hover:underline underline-offset-4'
+              >
                 Sign In
               </Link>
             </p>

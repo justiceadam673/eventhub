@@ -33,21 +33,33 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <div className='hidden md:flex items-center gap-8'>
-          {[
-            { name: "Explore", icon: <Compass size={18} /> },
-            { name: "Vendors", icon: <Store size={18} /> },
-            { name: "How it Works", icon: <Info size={18} /> },
-          ].map((item) => (
-            <motion.a
-              key={item.name}
-              href='#'
-              whileHover={{ y: -2 }}
+          <motion.div whileHover={{ y: -2 }}>
+            <Link
+              to='/explore'
               className='flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-purple-600 transition-colors'
             >
-              {item.icon}
-              {item.name}
-            </motion.a>
-          ))}
+              <Compass size={18} />
+              Explore
+            </Link>
+          </motion.div>
+          <motion.div whileHover={{ y: -2 }}>
+            <Link
+              to='/landingPageVendor'
+              className='flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-purple-600 transition-colors'
+            >
+              <Store size={18} />
+              Vendors
+            </Link>
+          </motion.div>
+          <motion.div whileHover={{ y: -2 }}>
+            <Link
+              to='/HowItWorks'
+              className='flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-purple-600 transition-colors'
+            >
+              <Info size={18} />
+              How it Works
+            </Link>
+          </motion.div>
         </div>
 
         {/* Action Buttons */}
@@ -90,15 +102,21 @@ const Navbar = () => {
             className='md:hidden bg-white border-t border-gray-100 overflow-hidden'
           >
             <div className='flex flex-col p-6 gap-4'>
-              <a href='#' className='text-lg font-medium text-gray-800'>
+              <Link to='/explore' className='text-lg font-medium text-gray-800'>
                 Explore
-              </a>
-              <a href='#' className='text-lg font-medium text-gray-800'>
+              </Link>
+              <Link
+                to='/landingPageVendor'
+                className='text-lg font-medium text-gray-800'
+              >
                 Vendors
-              </a>
-              <a href='#' className='text-lg font-medium text-gray-800'>
+              </Link>
+              <Link
+                to='/HowItWorks'
+                className='text-lg font-medium text-gray-800'
+              >
                 How it Works
-              </a>
+              </Link>
               <hr className='border-gray-100' />
               <Link
                 to='/signin'

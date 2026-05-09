@@ -8,9 +8,17 @@ import Vendors from "./pages/clients/Vendors";
 import Booking from "./pages/clients/Booking";
 import Messages from "./pages/clients/Messages";
 import Profile from "./pages/clients/Profile";
-// import VendorDashboard from "./pages/vendors/Dashboard";
-// import Services from "./pages/vendors/Services";
+import Explore from "./pages/Explore";
+import LandingPageVendor from "./pages/LandingPageVendor";
+import HowItWorks from "./components/HowItWorks";
+import VendorDashboard from "./pages/vendors/Dashboard";
+import VendorLayout from "./pages/VendorsLayout";
+import VendorBookings from "./pages/vendors/VendorBookings";
+import Services from "./pages/vendors/Services";
 import Layout from "./pages/Layout";
+import VendorMessages from "./pages/vendors/VendorMessages";
+import VendorEarnings from "./pages/vendors/VendorEarning";
+import VendorProfile from "./pages/vendors/VendorProfile";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 const App = () => {
   return (
@@ -20,6 +28,9 @@ const App = () => {
           <Route path='/' element={<Landing />} />
           <Route path='/signup' element={<Signup />} />
           <Route path='/signin' element={<Signin />} />
+          <Route path='/explore' element={<Explore />} />
+          <Route path='/HowItWorks' element={<HowItWorks />} />
+          <Route path='/landingPageVendor' element={<LandingPageVendor />} />
 
           {/* Client Routes with Layout */}
           <Route element={<Layout />}>
@@ -31,9 +42,13 @@ const App = () => {
           </Route>
 
           {/* Vendor Routes with Layout */}
-          <Route element={<Layout />}>
-            {/* <Route path='/vendor/dashboard' element={<VendorDashboard />} /> */}
-            {/* <Route path='/vendor/services' element={<Services />} /> */}
+          <Route element={<VendorLayout />}>
+            <Route path='/vendor/dashboard' element={<VendorDashboard />} />
+            <Route path='/vendor/bookings' element={<VendorBookings />} />
+            <Route path='/vendor/services' element={<Services />} />
+            <Route path='/vendor/messages' element={<VendorMessages />} />
+            <Route path='/vendor/earnings' element={<VendorEarnings />} />
+            <Route path='/vendor/profile' element={<VendorProfile />} />
           </Route>
         </Routes>
       </Router>

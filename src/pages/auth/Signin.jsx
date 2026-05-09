@@ -97,14 +97,16 @@ const Signin = () => {
             </div>
 
             {/* Sign In Button */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className='w-full bg-gray-900 hover:bg-purple-600 text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-gray-200 hover:shadow-purple-200 flex items-center justify-center gap-3 transition-all mt-8'
-            >
-              Sign In
-              <LogIn size={20} />
-            </motion.button>
+            <Link to={"/dashboard"}>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className='w-full bg-gray-900 hover:bg-purple-600 text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-gray-200 hover:shadow-purple-200 flex items-center justify-center gap-3 transition-all mt-8'
+              >
+                Sign In
+                <LogIn size={20} />
+              </motion.button>
+            </Link>
           </form>
 
           {/* Social Sign In (Extra Touch) */}
