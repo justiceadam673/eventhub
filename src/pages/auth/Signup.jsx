@@ -178,7 +178,7 @@ const Signup = () => {
             </div>
 
             {/* Create Button */}
-            <Link to={"/dashboard"}>
+            <Link to={"/vendor/dashboard"}>
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
