@@ -10,7 +10,7 @@ import Messages from "./pages/clients/Messages";
 import Profile from "./pages/clients/Profile";
 import Explore from "./pages/Explore";
 import LandingPageVendor from "./pages/LandingPageVendor";
-import HowItWorks from "./components/HowItWorks";
+import HowItWorksPage from "./pages/HowItWorks";
 import VendorDashboard from "./pages/vendors/Dashboard";
 import VendorLayout from "./pages/VendorsLayout";
 import VendorBookings from "./pages/vendors/VendorBookings";
@@ -29,7 +29,7 @@ const App = () => {
           <Route path='/signup' element={<Signup />} />
           <Route path='/signin' element={<Signin />} />
           <Route path='/explore' element={<Explore />} />
-          <Route path='/HowItWorks' element={<HowItWorks />} />
+          <Route path='/HowItWorks' element={<HowItWorksPage />} />
           <Route path='/landingPageVendor' element={<LandingPageVendor />} />
 
           {/* Client Routes with Layout */}

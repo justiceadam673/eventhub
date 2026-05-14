@@ -88,6 +88,7 @@ const Hero = () => {
               <option>Select Category</option>
               <option>Catering</option>
               <option>Photography</option>
+              <option>DJ</option>
               <option>Decoration</option>
             </select>
           </div>

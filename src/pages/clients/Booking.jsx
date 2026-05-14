@@ -1,11 +1,9 @@
-import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Calendar,
   Users,
   MapPin,
   ShieldCheck,
-  ChevronLeft,
   Sparkles,
   Info,
   CreditCard,
@@ -14,14 +12,6 @@ import {
 } from "lucide-react";
 
 const BookingPage = () => {
-  const [formData, setFormData] = useState({
-    date: "",
-    guests: "",
-    type: "",
-    venue: "",
-    notes: "",
-  });
-
   const vendor = {
     name: "Elite Catering",
     category: "Gourmet Catering",
@@ -38,33 +28,6 @@ const BookingPage = () => {
 
   return (
     <div className='min-h-screen bg-[#fafafa] font-sans text-gray-900'>
-      {/* Premium Navbar */}
-      <nav className='bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 px-6 py-4'>
-        <div className='max-w-7xl mx-auto flex items-center justify-between'>
-          <div className='flex items-center gap-4'>
-            <button className='p-2 hover:bg-gray-100 rounded-full transition-colors'>
-              <ChevronLeft size={20} />
-            </button>
-            <h1 className='text-2xl font-black text-gray-900 tracking-tight'>
-              Event<span className='text-purple-600'>Hub</span>
-            </h1>
-          </div>
-
-          <div className='flex items-center gap-4 bg-gray-50 px-4 py-2 rounded-2xl border border-gray-100'>
-            <div className='text-right hidden sm:block'>
-              <h4 className='text-sm font-bold text-gray-900'>Justice Adam</h4>
-              <p className='text-[10px] font-bold text-purple-600 uppercase tracking-widest'>
-                Client Account
-              </p>
-            </div>
-            <div className='w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center text-white font-bold shadow-sm'>
-              JA
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Layout */}
       <main className='max-w-7xl mx-auto p-6 lg:p-10 grid lg:grid-cols-3 gap-10'>
         {/* Left Column: Form & Info */}
         <div className='lg:col-span-2 space-y-8'>
@@ -80,7 +43,7 @@ const BookingPage = () => {
                 alt={vendor.name}
                 className='w-full h-full object-cover'
               />
-              <div className='absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent' />
+              <div className='absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent' />
               <div className='absolute bottom-6 left-8 text-white'>
                 <div className='flex items-center gap-2 mb-2'>
                   <span className='bg-purple-600 text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full'>
@@ -206,7 +169,7 @@ const BookingPage = () => {
             className='sticky top-28 bg-white rounded-[2.5rem] p-8 shadow-[0_30px_60px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden'
           >
             {/* Design Decoration */}
-            <div className='absolute top-0 right-0 w-32 h-32 bg-purple-50 rounded-full -mr-16 -mt-16 -z-0' />
+            <div className='absolute top-0 right-0 w-32 h-32 bg-purple-50 rounded-full -mr-16 -mt-16 z-0' />
 
             <h3 className='text-xl font-black mb-8 relative z-10'>
               Order Summary

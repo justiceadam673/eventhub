@@ -63,10 +63,10 @@ const VendorDashboard = () => {
             animate={{ opacity: 1, x: 0 }}
           >
             <h2 className='text-4xl font-black tracking-tight text-gray-900'>
-              Vendor <span className='text-purple-600'>Console</span>
+              Welcome <span className='text-purple-600'>back!</span>
             </h2>
             <p className='text-gray-500 mt-1 font-medium'>
-              Welcome back! Here is what's happening with your services today.
+              Here is what's happening with your services today.
             </p>
           </motion.div>
 

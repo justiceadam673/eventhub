@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import {
   Lock,
   ArrowRight,
+  ArrowLeft,
   Star,
   Sparkles,
   Search,
@@ -53,6 +54,14 @@ const Explore = () => {
     <div className='bg-linear-to-b from-gray-50 via-white to-gray-50 min-h-screen'>
       {/* Header Section */}
       <section className='relative pt-32 pb-20 px-6 overflow-hidden'>
+        {/* Back to Home Button */}
+        <Link
+          to='/'
+          className='absolute top-4 left-4 z-20 flex items-center gap-2 bg-white/80 backdrop-blur-md px-4 py-2 rounded-full border border-gray-200 hover:bg-white hover:shadow-md transition-all duration-300 text-gray-700 hover:text-gray-900'
+        >
+          <ArrowLeft size={16} />
+          Back to Home
+        </Link>
         {/* Decorative blobs */}
         <div className='absolute top-10 left-0 w-80 h-80 bg-purple-200/30 rounded-full blur-3xl -z-10' />
         <div className='absolute bottom-0 right-10 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl -z-10' />

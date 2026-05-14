@@ -51,7 +51,7 @@ const VendorServices = () => {
       <main className='max-w-7xl mx-auto p-6 lg:p-10'>
         {/* Header Section */}
         <header className='flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12'>
-          <motion.div
+          {/* <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
           >
@@ -62,7 +62,7 @@ const VendorServices = () => {
               You have {services.length} active service packages being
               showcased.
             </p>
-          </motion.div>
+          </motion.div> */}
 
           <motion.button
             whileHover={{ scale: 1.05 }}

@@ -62,7 +62,7 @@ const VendorBookings = () => {
       <main className='max-w-7xl mx-auto p-6 lg:p-10'>
         {/* Header Section */}
         <header className='flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10'>
-          <motion.div
+          {/* <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
           >
@@ -73,7 +73,7 @@ const VendorBookings = () => {
               Tracking {filteredBookings.length} bookings under "{activeTab}"
               status.
             </p>
-          </motion.div>
+          </motion.div> */}
 
           {/* Refined Search */}
           <div className='relative group w-full lg:w-[400px]'>

@@ -12,6 +12,7 @@ import {
   Briefcase,
   Play,
 } from "lucide-react";
+import BackArrow from "../components/BackArrow";
 
 const LandingPageVendor = () => {
   const vendors = [
@@ -59,6 +60,11 @@ const LandingPageVendor = () => {
 
   return (
     <div className='min-h-screen bg-[#FAFAFA] font-sans text-slate-900 selection:bg-purple-100 selection:text-purple-600'>
+      {/* Back Button */}
+      <div className='fixed top-6 left-6 z-50'>
+        <BackArrow to='/' />
+      </div>
+
       {/* Hero Section */}
       <section className='relative px-6 lg:px-12 pt-20 pb-32 overflow-hidden'>
         {/* Decorative Background Elements */}

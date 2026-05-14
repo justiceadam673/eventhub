@@ -60,7 +60,7 @@ const VendorEarnings = () => {
       <main className='max-w-7xl mx-auto p-6 lg:p-10'>
         {/* Header Section */}
         <header className='flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12'>
-          <motion.div
+          {/* <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
           >
@@ -75,7 +75,7 @@ const VendorEarnings = () => {
             <p className='text-slate-500 mt-1 font-medium italic'>
               Monitor your financial growth and pending payouts.
             </p>
-          </motion.div>
+          </motion.div> */}
 
           <motion.button
             whileHover={{ scale: 1.05 }}

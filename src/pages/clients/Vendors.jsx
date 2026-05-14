@@ -107,7 +107,7 @@ const ExploreVendors = () => {
 
       <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10'>
         {/* Page Header */}
-        <div className='text-center max-w-2xl mx-auto mb-12'>
+        {/* <div className='text-center max-w-2xl mx-auto mb-12'>
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -134,7 +134,7 @@ const ExploreVendors = () => {
           >
             Browse top-rated professionals to make your event unforgettable.
           </motion.p>
-        </div>
+        </div> */}
 
         {/* Sticky Control Bar (Search + Filters) */}
         <div className='sticky top-4 z-30 mb-10'>

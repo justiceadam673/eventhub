@@ -1,277 +1,180 @@
-import { useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import {
-  Search,
   MessageSquare,
-  Send,
+  Sparkles,
+  ShieldCheck,
+  Zap,
   Bell,
-  HeartHandshake,
-  CalendarDays,
-  Clock3,
-  User,
+  ChevronLeft,
+  Clock,
+  Send,
 } from "lucide-react";
 
-const conversationThreads = [
-  {
-    id: 1,
-    name: "Luxe Events",
-    lastMessage: "Absolutely, we can add the signature cake!",
-    time: "2m ago",
-    unread: 3,
-    role: "Vendor",
-    avatar: "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?auto=format&fit=crop&q=80&w=200",
-  },
-  {
-    id: 2,
-    name: "Sparkle Music",
-    lastMessage: "Your playlist is ready for review.",
-    time: "14m ago",
-    unread: 0,
-    role: "Vendor",
-    avatar: "https://images.unsplash.com/photo-1512428559087-560fa5ceab42?auto=format&fit=crop&q=80&w=200",
-  },
-  {
-    id: 3,
-    name: "Bella Beauty",
-    lastMessage: "See you at the venue at 3pm.",
-    time: "1h ago",
-    unread: 1,
-    role: "Vendor",
-    avatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=200",
-  },
-  {
-    id: 4,
-    name: "Event Harmony",
-    lastMessage: "I will send the updated quote today.",
-    time: "Yesterday",
-    unread: 0,
-    role: "Vendor",
-    avatar: "https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?auto=format&fit=crop&q=80&w=200",
-  },
-];
-
-const messagesData = {
-  1: [
-    {
-      id: 1,
-      author: "vendor",
-      text: "Hi Sarah! Your venue choice is beautiful. We can finalize the menu and send the tasting notes by tomorrow.",
-      time: "09:12 AM",
-    },
-    {
-      id: 2,
-      author: "me",
-      text: "Amazing! Please include the vegan option and a signature dessert.",
-      time: "09:15 AM",
-    },
-    {
-      id: 3,
-      author: "vendor",
-      text: "Great. I’ll add the rose champagne toast and confirm the cake design.",
-      time: "09:18 AM",
-    },
-  ],
-  2: [
-    {
-      id: 4,
-      author: "vendor",
-      text: "We have a few new DJ mixes that would match your theme perfectly.",
-      time: "08:40 AM",
-    },
-    {
-      id: 5,
-      author: "me",
-      text: "Send them over and I’ll pick my favorites.",
-      time: "08:43 AM",
-    },
-  ],
-};
-
 const Messages = () => {
-  const [activeThread, setActiveThread] = useState(1);
-  const [messageText, setMessageText] = useState("");
-
-  const activeMessages = messagesData[activeThread] || [];
-  const activeThreadData = conversationThreads.find((thread) => thread.id === activeThread);
-
   return (
-    <div className='min-h-screen bg-[#f7f4ff] font-sans text-gray-900 relative overflow-hidden'>
-      <div className='absolute -top-24 -right-24 w-[420px] h-[420px] rounded-full bg-purple-300/30 blur-[120px] pointer-events-none' />
-      <div className='absolute -bottom-32 left-0 w-[520px] h-[520px] rounded-full bg-pink-200/30 blur-[140px] pointer-events-none' />
+    <div className='min-h-screen bg-[#fafafa] font-sans text-gray-900 overflow-hidden relative'>
+      {/* Background Ambient Glows */}
+      <div className='absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-100/50 rounded-full blur-[120px] -z-10' />
+      <div className='absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-pink-100/50 rounded-full blur-[120px] -z-10' />
 
-      <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10'>
+      {/* Navbar Snippet */}
+      <nav className='max-w-7xl mx-auto px-6 py-8 flex items-center justify-between relative z-10'>
+        <button className='flex items-center gap-2 font-black text-gray-400 hover:text-purple-600 transition-colors'>
+          <ChevronLeft size={20} />
+          Back to Dashboard
+        </button>
+        <div className='flex items-center gap-2'>
+          <span className='w-2 h-2 bg-green-500 rounded-full animate-pulse' />
+          <span className='text-[10px] font-black uppercase tracking-[0.2em] text-gray-400'>
+            System Online
+          </span>
+        </div>
+      </nav>
+
+      <main className='max-w-4xl mx-auto px-6 pt-12 pb-24 relative z-10 text-center'>
+        {/* Animated Icon Hub */}
+        <div className='relative inline-block mb-12'>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className='absolute inset-0 border-2 border-dashed border-purple-200 rounded-full scale-150'
+          />
+
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className='w-32 h-32 bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(147,51,234,0.15)] flex items-center justify-center relative z-10 border border-purple-50'
+          >
+            <MessageSquare
+              size={48}
+              className='text-purple-600'
+              strokeWidth={2.5}
+            />
+
+            {/* Notification Badge Floating */}
+            <motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{ repeat: Infinity, duration: 3 }}
+              className='absolute -top-2 -right-2 bg-pink-500 text-white p-2 rounded-xl shadow-lg border-4 border-white'
+            >
+              <Bell size={16} fill='white' />
+            </motion.div>
+          </motion.div>
+
+          {/* Satellite Icons */}
+          {[Zap, ShieldCheck, Sparkles].map((Icon, i) => (
+            <motion.div
+              key={i}
+              animate={{
+                y: [0, i % 2 === 0 ? -15 : 15, 0],
+                opacity: [0.5, 1, 0.5],
+              }}
+              transition={{ repeat: Infinity, duration: 4, delay: i * 0.5 }}
+              className={`absolute p-3 bg-white rounded-xl shadow-sm border border-gray-50 text-purple-400
+                ${i === 0 ? "-left-16 top-0" : i === 1 ? "-right-20 top-10" : "left-20 -bottom-10"}`}
+            >
+              <Icon size={20} />
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Text Content */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className='relative rounded-[2rem] overflow-hidden bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-cyan-500 p-8 shadow-[0_40px_120px_rgba(99,102,241,0.18)]'
+          transition={{ delay: 0.2 }}
         >
-          <div className='absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.65),transparent_35%)]' />
-          <div className='relative z-10 grid gap-6 lg:grid-cols-[1.2fr_0.8fr] items-center'>
-            <div>
-              <p className='text-sm uppercase tracking-[0.35em] text-white/80 font-semibold'>Client Messaging</p>
-              <h1 className='mt-4 text-4xl md:text-5xl font-black text-white tracking-tight'>Stay in sync with every vendor.</h1>
-              <p className='mt-4 max-w-xl text-white/85 text-base md:text-lg leading-8'>Communicate effortlessly with your event partners, track updates, and keep every detail organized inside a smart conversation dashboard.</p>
-            </div>
-            <div className='grid gap-4 sm:grid-cols-2'>
-              <div className='rounded-[1.75rem] bg-white/10 border border-white/20 p-5 backdrop-blur-xl'>
-                <div className='flex items-center gap-3 text-white'>
-                  <Bell className='w-5 h-5' />
-                  <span className='font-semibold'>Fast replies</span>
-                </div>
-                <p className='mt-3 text-sm text-white/80'>Respond to vendor messages before the next planning checkpoint.</p>
-              </div>
-              <div className='rounded-[1.75rem] bg-white/10 border border-white/20 p-5 backdrop-blur-xl'>
-                <div className='flex items-center gap-3 text-white'>
-                  <HeartHandshake className='w-5 h-5' />
-                  <span className='font-semibold'>Trusted vendors</span>
-                </div>
-                <p className='mt-3 text-sm text-white/80'>All your conversations are grouped with trusted professionals you already love.</p>
-              </div>
-            </div>
-          </div>
+          <h2 className='text-5xl md:text-6xl font-black tracking-tighter mb-6'>
+            Real-time{" "}
+            <span className='text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500'>
+              Conversations
+            </span>
+          </h2>
+          <p className='text-gray-500 text-lg font-medium max-w-xl mx-auto leading-relaxed mb-10'>
+            We're building a seamless way for you to chat with vendors,
+            negotiate quotes, and finalize event details instantly.
+          </p>
         </motion.div>
 
-        <div className='mt-10 grid gap-8 xl:grid-cols-[360px_1fr]'>
-          <motion.aside
-            initial={{ opacity: 0, x: -24 }}
-            animate={{ opacity: 1, x: 0 }}
-            className='rounded-[2rem] border border-white/80 bg-white/90 shadow-[0_20px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl overflow-hidden'
-          >
-            <div className='flex items-center justify-between gap-4 p-6 border-b border-gray-200/70'>
-              <div>
-                <h2 className='text-lg font-black text-slate-900'>Conversations</h2>
-                <p className='text-sm text-slate-500'>Recent vendor chats</p>
+        {/* Features Preview Bento */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className='grid md:grid-cols-3 gap-6 mb-12 text-left'
+        >
+          {[
+            {
+              icon: <Clock size={20} />,
+              title: "Quick Replies",
+              desc: "AI-powered suggestions for faster booking.",
+            },
+            {
+              icon: <Send size={20} />,
+              title: "Instant Quotes",
+              desc: "Receive and approve invoices inside the chat.",
+            },
+            {
+              icon: <ShieldCheck size={20} />,
+              title: "Secure Chat",
+              desc: "End-to-end encryption for your event privacy.",
+            },
+          ].map((feature, i) => (
+            <div
+              key={i}
+              className='bg-white/60 backdrop-blur-sm p-6 rounded-3xl border border-white shadow-sm hover:shadow-md transition-all group'
+            >
+              <div className='text-purple-600 mb-4 group-hover:scale-110 transition-transform'>
+                {feature.icon}
               </div>
-              <button className='inline-flex h-11 w-11 items-center justify-center rounded-3xl bg-violet-600 text-white shadow-lg shadow-violet-200/50 transition hover:-translate-y-0.5'>
-                <MessageSquare className='w-5 h-5' />
-              </button>
+              <h4 className='font-black text-sm uppercase tracking-widest mb-2'>
+                {feature.title}
+              </h4>
+              <p className='text-xs text-gray-500 font-bold leading-relaxed'>
+                {feature.desc}
+              </p>
             </div>
+          ))}
+        </motion.div>
 
-            <div className='p-4'>
-              <label className='relative block'>
-                <Search className='absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400' />
-                <input
-                  type='search'
-                  placeholder='Search chats...'
-                  className='w-full rounded-3xl border border-slate-200 bg-slate-50/90 py-3 pl-12 pr-4 text-sm text-slate-700 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100'
-                />
-              </label>
-            </div>
-
-            <div className='divide-y divide-slate-200/80'>
-              {conversationThreads.map((thread) => (
-                <motion.button
-                  key={thread.id}
-                  onClick={() => setActiveThread(thread.id)}
-                  whileHover={{ scale: 1.01 }}
-                  className={`w-full text-left px-5 py-4 flex items-center gap-4 transition ${
-                    thread.id === activeThread
-                      ? "bg-violet-600/5"
-                      : "hover:bg-slate-50"
-                  }`}
-                >
-                  <img
-                    src={thread.avatar}
-                    alt={thread.name}
-                    className='h-14 w-14 rounded-3xl object-cover border border-slate-200'
-                  />
-                  <div className='flex-1 min-w-0'>
-                    <div className='flex items-center justify-between gap-2'>
-                      <h3 className='truncate text-sm font-semibold text-slate-900'>{thread.name}</h3>
-                      <span className='text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400'>
-                        {thread.time}
-                      </span>
-                    </div>
-                    <p className='mt-1 truncate text-sm text-slate-500'>{thread.lastMessage}</p>
-                  </div>
-                  {thread.unread > 0 ? (
-                    <span className='inline-flex h-7 min-w-[1.75rem] items-center justify-center rounded-full bg-violet-600 text-[11px] font-bold text-white'>
-                      {thread.unread}
-                    </span>
-                  ) : null}
-                </motion.button>
-              ))}
-            </div>
-          </motion.aside>
-
-          <motion.section
-            initial={{ opacity: 0, x: 24 }}
-            animate={{ opacity: 1, x: 0 }}
-            className='rounded-[2rem] border border-white/80 bg-white/90 shadow-[0_20px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl flex flex-col overflow-hidden'
-          >
-            <div className='flex flex-col gap-6 p-6 border-b border-gray-200/70 md:flex-row md:items-center md:justify-between'>
-              <div>
-                <p className='text-xs uppercase tracking-[0.35em] text-violet-500 font-bold'>Active chat</p>
-                <h2 className='mt-2 text-2xl font-black text-slate-900'>{activeThreadData?.name || "Vendor Chat"}</h2>
-                <p className='mt-1 text-sm text-slate-500'>Connected with your event team and vendors in one place.</p>
-              </div>
-              <div className='rounded-3xl bg-slate-50 px-4 py-3 inline-flex items-center gap-3 text-sm text-slate-600'>
-                <CalendarDays className='h-4 w-4 text-violet-500' />
-                <span>Event check-in: May 24</span>
-              </div>
-            </div>
-
-            <div className='flex-1 overflow-hidden'>
-              <div className='h-full overflow-y-auto px-6 py-6 space-y-4'>
-                {activeMessages.map((message, index) => (
-                  <motion.div
-                    key={message.id}
-                    initial={{ opacity: 0, y: 18 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className={`max-w-[85%] ${
-                      message.author === "me"
-                        ? "ml-auto rounded-[2rem] bg-violet-600 text-white px-5 py-4 shadow-[0_20px_70px_rgba(124,58,237,0.12)]"
-                        : "rounded-[2rem] border border-slate-200 bg-slate-100 text-slate-800 px-5 py-4"
-                    }`}
-                  >
-                    <div className='flex items-center justify-between gap-3'>
-                      <p className='text-sm leading-6'>{message.text}</p>
-                      <span className={`text-[11px] font-semibold ${message.author === "me" ? "text-violet-100/90" : "text-slate-400"}`}>
-                        {message.time}
-                      </span>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            <div className='border-t border-gray-200/70 bg-slate-50 p-5'>
-              <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
-                <div className='relative flex-1'>
-                  <textarea
-                    rows={1}
-                    value={messageText}
-                    onChange={(e) => setMessageText(e.target.value)}
-                    placeholder='Write a message...'
-                    className='min-h-[78px] w-full resize-none rounded-[1.75rem] border border-slate-200 bg-white px-5 py-4 pr-14 text-sm text-slate-700 outline-none shadow-sm focus:border-violet-400 focus:ring-2 focus:ring-violet-100'
-                  />
-                  <div className='pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs'>
-                    Press enter to send
-                  </div>
-                </div>
-                <button
-                  type='button'
-                  className='inline-flex items-center justify-center rounded-3xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-200/40 transition hover:bg-violet-700'
-                >
-                  <Send className='mr-2 h-4 w-4' />
-                  Send message
-                </button>
-              </div>
-              <div className='mt-4 flex flex-wrap gap-3 text-sm text-slate-500'>
-                <span className='inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 shadow-sm ring-1 ring-slate-200'>
-                  <User className='h-4 w-4 text-violet-500' />
-                  4 vendors active
-                </span>
-                <span className='inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 shadow-sm ring-1 ring-slate-200'>
-                  <Clock3 className='h-4 w-4 text-slate-500' />
-                  Response time: under 10 min
-                </span>
-              </div>
-            </div>
-          </motion.section>
-        </div>
+        {/* Notify Me CTA */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className='max-w-md mx-auto'
+        >
+          <div className='bg-white p-2 rounded-[2rem] shadow-xl shadow-purple-100/50 flex flex-col sm:row gap-2 border border-purple-50'>
+            <input
+              type='email'
+              placeholder='Enter your email to get early access'
+              className='flex-1 bg-transparent px-6 py-4 outline-none font-bold text-sm'
+            />
+            <button className='bg-gray-900 hover:bg-purple-600 text-white px-8 py-4 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.15em] transition-all whitespace-nowrap'>
+              Notify Me
+            </button>
+          </div>
+          <p className='mt-6 text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center justify-center gap-2'>
+            <Zap size={12} className='text-yellow-500' fill='currentColor' />
+            Launching Summer 2026
+          </p>
+        </motion.div>
       </main>
+
+      {/* Decorative "Message Bubbles" in background */}
+      <div className='hidden lg:block'>
+        <motion.div
+          animate={{ y: [0, -20, 0] }}
+          transition={{ repeat: Infinity, duration: 5 }}
+          className='absolute top-1/3 left-20 w-48 h-12 bg-white rounded-full shadow-lg border border-gray-100'
+        />
+        <motion.div
+          animate={{ y: [0, 20, 0] }}
+          transition={{ repeat: Infinity, duration: 6, delay: 1 }}
+          className='absolute top-1/2 right-20 w-32 h-12 bg-purple-600 rounded-full shadow-xl shadow-purple-200'
+        />
+      </div>
     </div>
   );
 };
