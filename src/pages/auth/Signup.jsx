@@ -12,10 +12,76 @@ import {
   Store,
   Tag,
 } from "lucide-react";
-import Signin from "./Signin";
+
+// Firebase imports
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, db } from "../../firebase"; // adjust path if needed
 
 const Signup = () => {
   const [role, setRole] = useState("buyer");
+  const [loading, setLoading] = useState(false);
+
+  const [form, setForm] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    businessName: "",
+    category: "",
+  });
+
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      // 1. Create Firebase Auth user
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        form.email,
+        form.password
+      );
+
+      const user = userCredential.user;
+
+      // 2. Save user in Firestore (users collection)
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        fullName: form.fullName,
+        email: form.email,
+        role: role,
+        createdAt: new Date(),
+      });
+
+      // 3. If vendor, create vendor profile
+      if (role === "vendor") {
+        await setDoc(doc(db, "vendors", user.uid), {
+          uid: user.uid,
+          businessName: form.businessName,
+          category: form.category,
+          ownerName: form.fullName,
+          email: form.email,
+          createdAt: new Date(),
+        });
+      }
+
+      // 4. Redirect based on role
+      window.location.href =
+        role === "vendor" ? "/vendor/dashboard" : "/dashboard";
+    } catch (error) {
+      console.error(error.message);
+      alert(error.message);
+    }
+
+    setLoading(false);
+  };
 
   return (
     <div className='min-h-screen flex items-center justify-center bg-[#fafafa] px-4 py-20 relative overflow-hidden'>
@@ -45,7 +111,7 @@ const Signup = () => {
             </p>
           </div>
 
-          {/* Role Selection - Delightful Toggle */}
+          {/* Role Selection */}
           <div className='flex bg-gray-100/80 p-1.5 rounded-2xl mb-8 relative'>
             <motion.div
               layout
@@ -55,7 +121,9 @@ const Signup = () => {
                 left: role === "buyer" ? "6px" : "calc(50% + 0px)",
               }}
             />
+
             <button
+              type='button'
               onClick={() => setRole("buyer")}
               className={`flex-1 flex items-center justify-center gap-2 py-3 z-10 text-sm font-bold transition-colors ${
                 role === "buyer" ? "text-purple-600" : "text-gray-500"
@@ -64,7 +132,9 @@ const Signup = () => {
               <User size={18} />
               I'm a Buyer
             </button>
+
             <button
+              type='button'
               onClick={() => setRole("vendor")}
               className={`flex-1 flex items-center justify-center gap-2 py-3 z-10 text-sm font-bold transition-colors ${
                 role === "vendor" ? "text-purple-600" : "text-gray-500"
@@ -76,7 +146,7 @@ const Signup = () => {
           </div>
 
           {/* Form */}
-          <form className='space-y-5'>
+          <form onSubmit={handleSignup} className='space-y-5'>
             {/* Full Name */}
             <div className='space-y-1.5'>
               <label className='text-xs font-bold text-gray-400 uppercase tracking-widest ml-1'>
@@ -84,18 +154,22 @@ const Signup = () => {
               </label>
               <div className='relative group'>
                 <User
-                  className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-600 transition-colors'
+                  className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400'
                   size={18}
                 />
                 <input
                   type='text'
+                  name='fullName'
+                  value={form.fullName}
+                  onChange={handleChange}
                   placeholder='John Doe'
-                  className='w-full bg-gray-50 border-none rounded-2xl px-12 py-4 outline-none ring-2 ring-transparent focus:ring-purple-600/20 focus:bg-white transition-all font-medium text-gray-700'
+                  className='w-full bg-gray-50 border-none rounded-2xl px-12 py-4 outline-none'
+                  required
                 />
               </div>
             </div>
 
-            {/* Vendor-Specific Fields with Animation */}
+            {/* Vendor Fields */}
             <AnimatePresence mode='wait'>
               {role === "vendor" && (
                 <motion.div
@@ -110,30 +184,41 @@ const Signup = () => {
                     </label>
                     <div className='relative group'>
                       <Store
-                        className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-600 transition-colors'
+                        className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400'
                         size={18}
                       />
                       <input
                         type='text'
+                        name='businessName'
+                        value={form.businessName}
+                        onChange={handleChange}
                         placeholder='Elite Catering'
-                        className='w-full bg-gray-50 border-none rounded-2xl px-12 py-4 outline-none ring-2 ring-transparent focus:ring-purple-600/20 focus:bg-white transition-all font-medium text-gray-700'
+                        className='w-full bg-gray-50 border-none rounded-2xl px-12 py-4 outline-none'
+                        required
                       />
                     </div>
                   </div>
+
                   <div className='space-y-1.5'>
                     <label className='text-xs font-bold text-gray-400 uppercase tracking-widest ml-1'>
                       Category
                     </label>
                     <div className='relative group'>
                       <Tag
-                        className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-600 transition-colors'
+                        className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400'
                         size={18}
                       />
-                      <select className='w-full bg-gray-50 border-none rounded-2xl px-12 py-4 outline-none ring-2 ring-transparent focus:ring-purple-600/20 focus:bg-white transition-all font-medium text-gray-700 appearance-none'>
-                        <option>Select Category</option>
-                        <option>Catering</option>
-                        <option>Photography</option>
-                        <option>Decoration</option>
+                      <select
+                        name='category'
+                        value={form.category}
+                        onChange={handleChange}
+                        className='w-full bg-gray-50 border-none rounded-2xl px-12 py-4 outline-none appearance-none'
+                        required
+                      >
+                        <option value=''>Select Category</option>
+                        <option value='Catering'>Catering</option>
+                        <option value='Photography'>Photography</option>
+                        <option value='Decoration'>Decoration</option>
                       </select>
                     </div>
                   </div>
@@ -148,13 +233,17 @@ const Signup = () => {
               </label>
               <div className='relative group'>
                 <Mail
-                  className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-600 transition-colors'
+                  className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400'
                   size={18}
                 />
                 <input
                   type='email'
+                  name='email'
+                  value={form.email}
+                  onChange={handleChange}
                   placeholder='name@example.com'
-                  className='w-full bg-gray-50 border-none rounded-2xl px-12 py-4 outline-none ring-2 ring-transparent focus:ring-purple-600/20 focus:bg-white transition-all font-medium text-gray-700'
+                  className='w-full bg-gray-50 border-none rounded-2xl px-12 py-4 outline-none'
+                  required
                 />
               </div>
             </div>
@@ -166,38 +255,37 @@ const Signup = () => {
               </label>
               <div className='relative group'>
                 <Lock
-                  className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-600 transition-colors'
+                  className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400'
                   size={18}
                 />
                 <input
                   type='password'
+                  name='password'
+                  value={form.password}
+                  onChange={handleChange}
                   placeholder='••••••••'
-                  className='w-full bg-gray-50 border-none rounded-2xl px-12 py-4 outline-none ring-2 ring-transparent focus:ring-purple-600/20 focus:bg-white transition-all font-medium text-gray-700'
+                  className='w-full bg-gray-50 border-none rounded-2xl px-12 py-4 outline-none'
+                  required
                 />
               </div>
             </div>
 
-            {/* Create Button */}
-            <Link to={"/vendor/dashboard"}>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className='w-full bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-purple-100 flex items-center justify-center gap-2 mt-8'
-              >
-                Create Account
-                <ChevronRight size={20} />
-              </motion.button>
-            </Link>
+            {/* Submit Button */}
+            <button
+              type='submit'
+              disabled={loading}
+              className='w-full bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 mt-8'
+            >
+              {loading ? "Creating Account..." : "Create Account"}
+              <ChevronRight size={20} />
+            </button>
           </form>
 
-          {/* Footer Links */}
+          {/* Footer */}
           <div className='mt-10 text-center'>
             <p className='text-gray-500 font-medium'>
               Already have an account?{" "}
-              <Link
-                to='/signin'
-                className='text-purple-600 font-bold hover:underline underline-offset-4'
-              >
+              <Link to='/signin' className='text-purple-600 font-bold'>
                 Sign In
               </Link>
             </p>

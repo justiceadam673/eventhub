@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
+import { db } from "../firebase";
 import {
   Sparkles,
   Compass,
@@ -137,5 +138,6 @@ const Navbar = () => {
     </nav>
   );
 };
+console.log(db);
 
 export default Navbar;

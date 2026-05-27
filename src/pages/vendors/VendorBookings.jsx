@@ -266,3 +266,183 @@ const VendorBookings = () => {
 };
 
 export default VendorBookings;
+
+// import React, { useEffect, useState } from "react";
+// import { motion, AnimatePresence } from "framer-motion";
+// import {
+//   Search,
+//   Calendar,
+//   MapPin,
+//   Users,
+//   ChevronRight,
+//   Check,
+//   X,
+//   Clock,
+//   Filter,
+// } from "lucide-react";
+
+// import { collection, query, where, onSnapshot, doc, updateDoc } from "firebase/firestore";
+// import { auth, db } from "../../firebase"; // adjust path if needed
+
+// const VendorBookings = () => {
+//   const [activeTab, setActiveTab] = useState("All");
+//   const [bookings, setBookings] = useState([]);
+
+//   const user = auth.currentUser;
+
+//   // 🔥 REAL-TIME FETCH
+//   useEffect(() => {
+//     if (!user) return;
+
+//     const q = query(
+//       collection(db, "bookings"),
+//       where("vendorId", "==", user.uid)
+//     );
+
+//     const unsubscribe = onSnapshot(q, (snapshot) => {
+//       const data = snapshot.docs.map((doc) => ({
+//         id: doc.id,
+//         ...doc.data(),
+//       }));
+
+//       setBookings(data);
+//     });
+
+//     return () => unsubscribe();
+//   }, [user]);
+
+//   // 🔥 UPDATE STATUS (ACCEPT / REJECT)
+//   const updateStatus = async (id, status) => {
+//     try {
+//       const ref = doc(db, "bookings", id);
+//       await updateDoc(ref, {
+//         status,
+//       });
+//     } catch (err) {
+//       console.error("Error updating booking:", err);
+//     }
+//   };
+
+//   const filteredBookings =
+//     activeTab === "All"
+//       ? bookings
+//       : bookings.filter((b) => b.status === activeTab);
+
+//   return (
+//     <div className='min-h-screen bg-[#fafafa] font-sans text-gray-900 pb-20'>
+//       <main className='max-w-7xl mx-auto p-6 lg:p-10'>
+
+//         {/* SEARCH (UNCHANGED UI) */}
+//         <header className='flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10'>
+//           <div className='relative group w-full lg:w-[400px]'>
+//             <Search
+//               className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-600 transition-colors'
+//               size={20}
+//             />
+//             <input
+//               type='text'
+//               placeholder='Find a client or event...'
+//               className='w-full bg-white border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 shadow-sm outline-none focus:border-purple-100 focus:ring-4 focus:ring-purple-50 transition-all font-bold'
+//             />
+//           </div>
+//         </header>
+
+//         {/* FILTER TABS (UNCHANGED UI) */}
+//         <div className='flex items-center gap-3 mb-10 overflow-x-auto pb-2 no-scrollbar'>
+//           <div className='bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 flex gap-1'>
+//             {["All", "Pending", "Confirmed", "Completed", "Rejected"].map((tab) => (
+//               <button
+//                 key={tab}
+//                 onClick={() => setActiveTab(tab)}
+//                 className={`relative px-6 py-2.5 rounded-xl font-black text-sm transition-all ${
+//                   activeTab === tab ? "text-white" : "text-gray-500 hover:bg-gray-50"
+//                 }`}
+//               >
+//                 {activeTab === tab && (
+//                   <motion.div
+//                     layoutId='activeTab'
+//                     className='absolute inset-0 bg-purple-600 rounded-xl -z-0'
+//                   />
+//                 )}
+//                 <span className='relative z-10'>{tab}</span>
+//               </button>
+//             ))}
+//           </div>
+//           <button className='p-3 bg-white rounded-2xl border border-gray-100 text-gray-400 hover:text-purple-600'>
+//             <Filter size={20} />
+//           </button>
+//         </div>
+
+//         {/* BOOKINGS */}
+//         <motion.div layout className='grid grid-cols-1 xl:grid-cols-2 gap-8'>
+//           <AnimatePresence mode='popLayout'>
+//             {filteredBookings.map((booking) => (
+//               <motion.div
+//                 key={booking.id}
+//                 layout
+//                 className='bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-gray-100'
+//               >
+
+//                 {/* HEADER */}
+//                 <div className='flex justify-between mb-8'>
+//                   <div>
+//                     <h2 className='text-2xl font-black'>{booking.event}</h2>
+//                     <p className='text-gray-500 font-bold'>{booking.service}</p>
+//                   </div>
+//                   <span className='font-black text-gray-900'>{booking.amount}</span>
+//                 </div>
+
+//                 {/* CLIENT */}
+//                 <div className='flex items-center gap-4 bg-gray-50 p-4 rounded-2xl mb-8'>
+//                   <div className='w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center font-black text-purple-600'>
+//                     {booking.client?.[0]}
+//                   </div>
+//                   <div>
+//                     <h3 className='font-black'>{booking.client}</h3>
+//                   </div>
+//                 </div>
+
+//                 {/* META */}
+//                 <div className='grid grid-cols-2 gap-4 mb-8'>
+//                   <p className='font-bold'>📅 {booking.date}</p>
+//                   <p className='font-bold'>📍 {booking.location}</p>
+//                   <p className='font-bold'>👥 {booking.guests} guests</p>
+//                   <p className='font-bold'>📌 {booking.status}</p>
+//                 </div>
+
+//                 {/* ACTIONS */}
+//                 <div className='flex gap-3'>
+//                   <button className='flex-[2] bg-gray-900 text-white py-4 rounded-2xl font-black'>
+//                     Full Details
+//                   </button>
+
+//                   {booking.status === "Pending" && (
+//                     <>
+//                       <button
+//                         onClick={() => updateStatus(booking.id, "Confirmed")}
+//                         className='flex-1 bg-green-50 text-green-600 p-4 rounded-2xl'
+//                       >
+//                         <Check size={20} />
+//                       </button>
+
+//                       <button
+//                         onClick={() => updateStatus(booking.id, "Rejected")}
+//                         className='flex-1 bg-red-50 text-red-500 p-4 rounded-2xl'
+//                       >
+//                         <X size={20} />
+//                       </button>
+//                     </>
+//                   )}
+//                 </div>
+
+//               </motion.div>
+//             ))}
+//           </AnimatePresence>
+//         </motion.div>
+
+//       </main>
+//     </div>
+//   );
+// };
+
+// export default VendorBookings;

@@ -1,9 +1,67 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Sparkles, Mail, Lock, LogIn, Fingerprint } from "lucide-react";
 
+// Firebase
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth, db } from "../../firebase";
+import { doc, getDoc } from "firebase/firestore";
+
 const Signin = () => {
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      // 1. Firebase Auth login
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        form.email,
+        form.password
+      );
+
+      const user = userCredential.user;
+
+      // 2. Get user role from Firestore
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+
+      if (!userDoc.exists()) {
+        throw new Error("User profile not found");
+      }
+
+      const userData = userDoc.data();
+
+      // 3. Redirect based on role
+      if (userData.role === "vendor") {
+        navigate("/vendor/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.error(error.message);
+      alert(error.message);
+    }
+
+    setLoading(false);
+  };
+
   return (
     <div className='min-h-screen flex items-center justify-center bg-[#fafafa] px-4 relative overflow-hidden'>
       {/* Soft Background Accents */}
@@ -34,7 +92,7 @@ const Signin = () => {
           </div>
 
           {/* Form */}
-          <form className='space-y-6'>
+          <form onSubmit={handleLogin} className='space-y-6'>
             {/* Email Field */}
             <div className='space-y-1.5'>
               <label className='text-xs font-bold text-gray-400 uppercase tracking-widest ml-1'>
@@ -47,8 +105,12 @@ const Signin = () => {
                 />
                 <input
                   type='email'
+                  name='email'
+                  value={form.email}
+                  onChange={handleChange}
                   placeholder='hello@example.com'
                   className='w-full bg-gray-50 border-none rounded-2xl px-12 py-4 outline-none ring-2 ring-transparent focus:ring-purple-600/20 focus:bg-white transition-all font-medium text-gray-700'
+                  required
                 />
               </div>
             </div>
@@ -73,8 +135,12 @@ const Signin = () => {
                 />
                 <input
                   type='password'
+                  name='password'
+                  value={form.password}
+                  onChange={handleChange}
                   placeholder='••••••••'
                   className='w-full bg-gray-50 border-none rounded-2xl px-12 py-4 outline-none ring-2 ring-transparent focus:ring-purple-600/20 focus:bg-white transition-all font-medium text-gray-700'
+                  required
                 />
               </div>
             </div>
@@ -97,19 +163,19 @@ const Signin = () => {
             </div>
 
             {/* Sign In Button */}
-            <Link to={"/dashboard"}>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className='w-full bg-gray-900 hover:bg-purple-600 text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-gray-200 hover:shadow-purple-200 flex items-center justify-center gap-3 transition-all mt-8'
-              >
-                Sign In
-                <LogIn size={20} />
-              </motion.button>
-            </Link>
+            <motion.button
+              type='submit'
+              disabled={loading}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className='w-full bg-gray-900 hover:bg-purple-600 text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-gray-200 hover:shadow-purple-200 flex items-center justify-center gap-3 transition-all mt-8'
+            >
+              {loading ? "Signing In..." : "Sign In"}
+              <LogIn size={20} />
+            </motion.button>
           </form>
 
-          {/* Social Sign In (Extra Touch) */}
+          {/* Social Sign In */}
           <div className='mt-8 flex flex-col items-center gap-6'>
             <div className='flex items-center gap-4 w-full'>
               <div className='h-[1px] bg-gray-100 flex-1' />
@@ -130,21 +196,6 @@ const Signin = () => {
             </p>
           </div>
         </div>
-
-        {/* Support Link */}
-        {/* <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className='text-center mt-8'
-        >
-          <a
-            href='#'
-            className='text-sm font-medium text-gray-400 hover:text-purple-600 flex items-center justify-center gap-2'
-          >
-            Need help accessing your account? <ArrowRight size={14} />
-          </a>
-        </motion.div> */}
       </motion.div>
     </div>
   );
