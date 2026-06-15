@@ -1,257 +1,253 @@
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar,
   Users,
   MapPin,
-  ShieldCheck,
-  Sparkles,
-  Info,
-  CreditCard,
-  MessageCircle,
-  Star,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  MoreVertical,
+  Receipt,
+  Search,
 } from "lucide-react";
+import { db } from "../../firebase"; // Adjust path as needed
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
 
-const BookingPage = () => {
-  const vendor = {
-    name: "Elite Catering",
-    category: "Gourmet Catering",
-    rating: "4.9",
-    reviews: "128",
-    location: "Abuja, Nigeria",
-    image:
-      "https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&q=80&w=1000",
-    price: 250000,
+const ClientBookingsPage = () => {
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        setLoading(true);
+
+        // IMPORTANT: If you have user authentication, you should filter by the logged-in user's ID
+        // const q = query(collection(db, "bookings"), where("clientId", "==", currentUser.uid), orderBy("createdAt", "desc"));
+
+        // For now, fetching all bookings (Fallback query)
+        const q = query(collection(db, "bookings"));
+        const querySnapshot = await getDocs(q);
+
+        const fetchedBookings = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setBookings(fetchedBookings);
+      } catch (error) {
+        console.error("Error fetching bookings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookings();
+  }, []);
+
+  // Helper function to determine status badge styling
+  const getStatusConfig = (status) => {
+    switch (status?.toLowerCase()) {
+      case "approved":
+        return {
+          bg: "bg-green-100",
+          text: "text-green-700",
+          icon: <CheckCircle2 size={16} />,
+          label: "Approved",
+        };
+      case "rejected":
+        return {
+          bg: "bg-red-100",
+          text: "text-red-700",
+          icon: <XCircle size={16} />,
+          label: "Rejected",
+        };
+      case "pending":
+      default:
+        return {
+          bg: "bg-orange-100",
+          text: "text-orange-700",
+          icon: <Clock size={16} />,
+          label: "Pending",
+        };
+    }
   };
 
-  const platformFee = 10000;
-  const total = vendor.price + platformFee;
+  // Filter bookings based on search term
+  const filteredBookings = bookings.filter(
+    (b) =>
+      b.vendorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      b.eventType?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className='min-h-screen bg-[#fafafa] font-sans text-gray-900'>
-      <main className='max-w-7xl mx-auto p-6 lg:p-10 grid lg:grid-cols-3 gap-10'>
-        {/* Left Column: Form & Info */}
-        <div className='lg:col-span-2 space-y-8'>
-          {/* Hero Vendor Card */}
+    <div className='min-h-screen bg-[#fafafa] font-sans text-gray-900 pb-20'>
+      {/* Header Background Decoration */}
+      <div className='absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-linear-to-b from-purple-100/50 to-transparent blur-[100px] pointer-events-none -z-10' />
+
+      <main className='max-w-7xl mx-auto p-6 lg:p-10 pt-12'>
+        {/* Page Header & Controls */}
+        <div className='flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12'>
+          <div>
+            <h1 className='text-4xl font-black mb-2 text-gray-900'>
+              My Bookings
+            </h1>
+            <p className='text-gray-500 font-medium'>
+              Track and manage all your vendor reservations
+            </p>
+          </div>
+
+          <div className='relative w-full md:w-96'>
+            <Search
+              className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400'
+              size={20}
+            />
+            <input
+              type='text'
+              placeholder='Search by vendor or event type...'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className='w-full bg-white border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-full py-4 pl-12 pr-6 outline-none focus:ring-2 focus:ring-purple-100 transition-all font-medium placeholder:text-gray-400'
+            />
+          </div>
+        </div>
+
+        {/* Loading State */}
+        {loading ? (
+          <div className='flex flex-col items-center justify-center py-32'>
+            <div className='w-12 h-12 border-4 border-gray-200 border-t-purple-600 rounded-full animate-spin' />
+            <p className='mt-4 text-gray-500 font-bold'>
+              Loading your bookings...
+            </p>
+          </div>
+        ) : filteredBookings.length === 0 ? (
+          /* Empty State */
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className='bg-white rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-gray-100'
+            className='bg-white rounded-[2.5rem] p-12 text-center shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-gray-100 max-w-2xl mx-auto mt-10'
           >
-            <div className='relative h-80'>
-              <img
-                src={vendor.image}
-                alt={vendor.name}
-                className='w-full h-full object-cover'
-              />
-              <div className='absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent' />
-              <div className='absolute bottom-6 left-8 text-white'>
-                <div className='flex items-center gap-2 mb-2'>
-                  <span className='bg-purple-600 text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full'>
-                    Top Rated
-                  </span>
-                </div>
-                <h2 className='text-4xl font-black'>{vendor.name}</h2>
-                <div className='flex items-center gap-4 mt-2 text-gray-200 font-medium'>
-                  <div className='flex items-center gap-1'>
-                    <Star
-                      size={16}
-                      className='fill-yellow-400 text-yellow-400'
-                    />
-                    <span>
-                      {vendor.rating} ({vendor.reviews} reviews)
-                    </span>
-                  </div>
-                  <div className='flex items-center gap-1'>
-                    <MapPin size={16} />
-                    <span>{vendor.location}</span>
-                  </div>
-                </div>
-              </div>
+            <div className='w-24 h-24 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-6'>
+              <Receipt size={40} className='text-purple-600' />
             </div>
+            <h3 className='text-2xl font-black mb-3'>No bookings found</h3>
+            <p className='text-gray-500 mb-8 font-medium'>
+              {searchTerm
+                ? "We couldn't find any bookings matching your search."
+                : "You haven't made any bookings yet. Start exploring vendors to plan your next big event!"}
+            </p>
           </motion.div>
+        ) : (
+          /* Bookings Grid */
+          <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
+            <AnimatePresence mode='popLayout'>
+              {filteredBookings.map((booking) => {
+                const status = getStatusConfig(booking.status);
 
-          {/* Detailed Booking Form */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className='bg-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-gray-100'
-          >
-            <div className='flex items-center gap-3 mb-8'>
-              <div className='bg-purple-100 p-2 rounded-xl'>
-                <Sparkles size={24} className='text-purple-600' />
-              </div>
-              <h3 className='text-2xl font-black'>Booking Details</h3>
-            </div>
+                return (
+                  <motion.div
+                    key={booking.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.3 }}
+                    className='bg-white rounded-[2rem] p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-gray-100 flex flex-col sm:flex-row gap-6 group hover:shadow-[0_20px_50px_rgba(147,51,234,0.08)] transition-all'
+                  >
+                    {/* Left side: Image & Status */}
+                    <div className='w-full sm:w-40 shrink-0 flex flex-col gap-4'>
+                      <div className='relative h-40 sm:h-32 rounded-2xl overflow-hidden bg-gray-100'>
+                        {booking.vendorImage ? (
+                          <img
+                            src={booking.vendorImage}
+                            alt={booking.vendorName}
+                            className='w-full h-full object-cover group-hover:scale-110 transition-transform duration-700'
+                          />
+                        ) : (
+                          <div className='w-full h-full flex items-center justify-center text-gray-400 font-bold text-xs'>
+                            No Image
+                          </div>
+                        )}
+                      </div>
 
-            <div className='grid md:grid-cols-2 gap-6'>
-              {/* Event Type */}
-              <div className='space-y-2'>
-                <label className='text-xs font-black text-gray-400 uppercase tracking-widest ml-1'>
-                  Event Type
-                </label>
-                <select className='w-full bg-gray-50 border-none rounded-2xl px-5 py-4 outline-none ring-2 ring-transparent focus:ring-purple-600/20 focus:bg-white transition-all font-bold text-gray-700 appearance-none'>
-                  <option>Wedding Ceremony</option>
-                  <option>Corporate Gala</option>
-                  <option>Birthday Celebration</option>
-                  <option>Private Concert</option>
-                </select>
-              </div>
+                      {/* Dynamic Status Badge */}
+                      <div
+                        className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider ${status.bg} ${status.text}`}
+                      >
+                        {status.icon}
+                        {status.label}
+                      </div>
+                    </div>
 
-              {/* Date */}
-              <div className='space-y-2'>
-                <label className='text-xs font-black text-gray-400 uppercase tracking-widest ml-1'>
-                  Preferred Date
-                </label>
-                <div className='relative'>
-                  <Calendar
-                    className='absolute right-5 top-1/2 -translate-y-1/2 text-gray-400'
-                    size={18}
-                  />
-                  <input
-                    type='date'
-                    className='w-full bg-gray-50 border-none rounded-2xl px-5 py-4 outline-none ring-2 ring-transparent focus:ring-purple-600/20 focus:bg-white transition-all font-bold text-gray-700'
-                  />
-                </div>
-              </div>
+                    {/* Right side: Details */}
+                    <div className='flex-1 flex flex-col'>
+                      <div className='flex justify-between items-start mb-2'>
+                        <div>
+                          <p className='text-[10px] font-black text-purple-600 uppercase tracking-widest mb-1'>
+                            {booking.eventType || "Event Booking"}
+                          </p>
+                          <h3 className='text-2xl font-black text-gray-900 leading-tight'>
+                            {booking.vendorName || "Unknown Vendor"}
+                          </h3>
+                        </div>
+                        <button className='p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-full transition-colors'>
+                          <MoreVertical size={20} />
+                        </button>
+                      </div>
 
-              {/* Guests */}
-              <div className='space-y-2 md:col-span-2'>
-                <label className='text-xs font-black text-gray-400 uppercase tracking-widest ml-1'>
-                  Estimated Guest Count
-                </label>
-                <div className='relative'>
-                  <Users
-                    className='absolute right-5 top-1/2 -translate-y-1/2 text-gray-400'
-                    size={18}
-                  />
-                  <input
-                    type='number'
-                    placeholder='e.g. 150'
-                    className='w-full bg-gray-50 border-none rounded-2xl px-5 py-4 outline-none ring-2 ring-transparent focus:ring-purple-600/20 focus:bg-white transition-all font-bold text-gray-700'
-                  />
-                </div>
-              </div>
+                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 mt-4 mb-6'>
+                        <div className='flex items-center gap-3 text-sm text-gray-600 font-medium'>
+                          <div className='p-2 bg-gray-50 rounded-lg text-gray-400'>
+                            <Calendar size={16} />
+                          </div>
+                          <span>{booking.date || "Date TBD"}</span>
+                        </div>
+                        <div className='flex items-center gap-3 text-sm text-gray-600 font-medium'>
+                          <div className='p-2 bg-gray-50 rounded-lg text-gray-400'>
+                            <MapPin size={16} />
+                          </div>
+                          <span className='truncate'>
+                            {booking.location || "Location TBD"}
+                          </span>
+                        </div>
+                        <div className='flex items-center gap-3 text-sm text-gray-600 font-medium'>
+                          <div className='p-2 bg-gray-50 rounded-lg text-gray-400'>
+                            <Users size={16} />
+                          </div>
+                          <span>
+                            {booking.guestCount
+                              ? `${booking.guestCount} Guests`
+                              : "N/A"}
+                          </span>
+                        </div>
+                        <div className='flex items-center gap-3 text-sm text-gray-600 font-medium'>
+                          <div className='p-2 bg-gray-50 rounded-lg text-gray-400'>
+                            <Receipt size={16} />
+                          </div>
+                          <span className='font-bold text-gray-900'>
+                            {booking.totalPrice
+                              ? `₦${Number(booking.totalPrice).toLocaleString()}`
+                              : "Quote Pending"}
+                          </span>
+                        </div>
+                      </div>
 
-              {/* Venue */}
-              <div className='space-y-2 md:col-span-2'>
-                <label className='text-xs font-black text-gray-400 uppercase tracking-widest ml-1'>
-                  Venue Address
-                </label>
-                <textarea
-                  rows='3'
-                  placeholder='Enter full event location...'
-                  className='w-full bg-gray-50 border-none rounded-2xl px-5 py-4 outline-none ring-2 ring-transparent focus:ring-purple-600/20 focus:bg-white transition-all font-bold text-gray-700 resize-none'
-                ></textarea>
-              </div>
-
-              {/* Notes */}
-              <div className='space-y-2 md:col-span-2'>
-                <label className='text-xs font-black text-gray-400 uppercase tracking-widest ml-1'>
-                  Special Requirements
-                </label>
-                <textarea
-                  rows='3'
-                  placeholder='Dietary restrictions, theme details, etc...'
-                  className='w-full bg-gray-50 border-none rounded-2xl px-5 py-4 outline-none ring-2 ring-transparent focus:ring-purple-600/20 focus:bg-white transition-all font-bold text-gray-700 resize-none'
-                ></textarea>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Right Column: Sticky Summary */}
-        <div className='relative'>
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className='sticky top-28 bg-white rounded-[2.5rem] p-8 shadow-[0_30px_60px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden'
-          >
-            {/* Design Decoration */}
-            <div className='absolute top-0 right-0 w-32 h-32 bg-purple-50 rounded-full -mr-16 -mt-16 z-0' />
-
-            <h3 className='text-xl font-black mb-8 relative z-10'>
-              Order Summary
-            </h3>
-
-            {/* Compact Vendor Info */}
-            <div className='flex items-center gap-4 mb-8 p-3 bg-gray-50 rounded-2xl'>
-              <img
-                src={vendor.image}
-                alt={vendor.name}
-                className='w-16 h-16 rounded-xl object-cover'
-              />
-              <div>
-                <h4 className='font-bold text-gray-900 leading-tight'>
-                  {vendor.name}
-                </h4>
-                <p className='text-xs text-gray-500 font-medium'>
-                  {vendor.category}
-                </p>
-              </div>
-            </div>
-
-            {/* Price Breakdown */}
-            <div className='space-y-4 mb-8'>
-              <div className='flex justify-between items-center'>
-                <span className='text-gray-500 font-semibold flex items-center gap-2'>
-                  Service Quote <Info size={14} className='text-gray-300' />
-                </span>
-                <span className='font-bold'>
-                  ₦{vendor.price.toLocaleString()}
-                </span>
-              </div>
-              <div className='flex justify-between items-center'>
-                <span className='text-gray-500 font-semibold'>
-                  Platform Fee
-                </span>
-                <span className='font-bold'>
-                  ₦{platformFee.toLocaleString()}
-                </span>
-              </div>
-              <div className='h-px bg-gray-100 my-2' />
-              <div className='flex justify-between items-center text-xl'>
-                <span className='font-black'>Total</span>
-                <span className='font-black text-purple-600'>
-                  ₦{total.toLocaleString()}
-                </span>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className='space-y-3'>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className='w-full bg-gray-900 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-gray-200 hover:bg-purple-600 hover:shadow-purple-200 transition-all'
-              >
-                <CreditCard size={20} />
-                Secure Checkout
-              </motion.button>
-
-              <button className='w-full bg-white border-2 border-gray-100 text-gray-700 py-4 rounded-2xl font-black flex items-center justify-center gap-3 hover:bg-gray-50 transition-all'>
-                <MessageCircle size={20} />
-                Chat with Vendor
-              </button>
-            </div>
-
-            {/* Trust Badges */}
-            <div className='mt-8 pt-8 border-t border-gray-50 text-center'>
-              <div className='flex items-center justify-center gap-2 text-purple-600 mb-2 font-bold text-sm'>
-                <ShieldCheck size={18} />
-                <span>Event Protection Enabled</span>
-              </div>
-              <p className='text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed px-4'>
-                Your payment is held in escrow until the event is completed
-                successfully.
-              </p>
-            </div>
-          </motion.div>
-        </div>
+                      {/* Action Button */}
+                      <button className='mt-auto w-full bg-gray-50 hover:bg-gray-900 text-gray-600 hover:text-white py-3 rounded-xl text-sm font-bold transition-colors'>
+                        View Full Details
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        )}
       </main>
     </div>
   );
 };
 
-export default BookingPage;
+export default ClientBookingsPage;

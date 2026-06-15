@@ -1,13 +1,21 @@
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "../firebase";
-
 export const uploadImage = async (file) => {
-  if (!file) return null;
+  const formData = new FormData();
 
-  const storageRef = ref(storage, `services/${Date.now()}-${file.name}`);
+  formData.append("image", file);
 
-  await uploadBytes(storageRef, file);
+  const response = await fetch(
+    `https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_IMGBB_API_KEY}`,
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
 
-  const url = await getDownloadURL(storageRef);
-  return url;
+  const data = await response.json();
+
+  if (!data.success) {
+    throw new Error("Image upload failed");
+  }
+
+  return data.data.url;
 };

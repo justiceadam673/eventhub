@@ -1,84 +1,185 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  LayoutDashboard,
-  Compass,
   CalendarHeart,
   MessageSquare,
-  User,
-  LogOut,
   Search,
   Bell,
   Heart,
   Star,
-  Sparkles,
   ShieldCheck,
   MapPin,
   ArrowUpRight,
 } from "lucide-react";
+import { auth, db } from "../../firebase";
+import {
+  collection,
+  doc,
+  getDoc,
+  onSnapshot,
+  orderBy,
+  query,
+  limit,
+  where,
+} from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [bookings, setBookings] = useState([]);
+  // const [featuredVendors, setFeaturedVendors] = useState([]);
+  const [featuredServices, setFeaturedServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const vendors = [
-    {
-      id: 1,
-      name: "Elite Catering",
-      category: "Catering",
-      rating: "4.9",
-      reviews: "128",
-      price: "$$$",
-      location: "New York, NY",
-      image:
-        "https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&q=80&w=600",
-    },
-    {
-      id: 2,
-      name: "Flash Photography",
-      category: "Photography",
-      rating: "4.8",
-      reviews: "84",
-      price: "$$",
-      location: "Brooklyn, NY",
-      image:
-        "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&q=80&w=600",
-    },
-    {
-      id: 3,
-      name: "Royal Decorations",
-      category: "Decoration",
-      rating: "4.7",
-      reviews: "56",
-      price: "$$$",
-      location: "Queens, NY",
-      image:
-        "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&q=80&w=600",
-    },
-  ];
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setUser(firebaseUser);
+
+      if (!firebaseUser) {
+        setUserProfile(null);
+        setBookings([]);
+        setFeaturedServices([]);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const userRef = doc(db, "users", firebaseUser.uid);
+        const userSnap = await getDoc(userRef);
+
+        setUserProfile(userSnap.exists() ? userSnap.data() : null);
+      } catch (err) {
+        console.error("Error loading user profile:", err);
+        setError("Unable to load profile.");
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const bookingsQuery = query(
+      collection(db, "bookings"),
+      where("clientId", "==", user.uid)
+    );
+
+    const bookingsUnsub = onSnapshot(
+      bookingsQuery,
+      (snapshot) => {
+        const fetchedBookings = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setBookings(fetchedBookings);
+      },
+      (err) => {
+        console.error("Error loading bookings:", err);
+        setError("Unable to load bookings.");
+      }
+    );
+
+    // const vendorsQuery = query(
+    //   collection(db, "vendors"),
+    //   orderBy("createdAt", "desc"),
+    //   limit(3)
+    // );
+    const servicesQuery = query(
+      collection(db, "services"),
+      orderBy("createdAt", "desc")
+    );
+
+    // const vendorsUnsub = onSnapshot(
+    //   vendorsQuery,
+    //   (snapshot) => {
+    //     const fetchedVendors = snapshot.docs.map((doc) => ({
+    //       id: doc.id,
+    //       ...doc.data(),
+    //     }));
+    //     setFeaturedVendors(fetchedVendors);
+    //   },
+    //   (err) => {
+    //     console.error("Error loading featured vendors:", err);
+    //   }
+    // );
+    const servicesUnsub = onSnapshot(servicesQuery, (snapshot) => {
+      const fetchedServices = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setFeaturedServices(fetchedServices);
+    });
+
+    return () => {
+      bookingsUnsub();
+      // vendorsUnsub();
+      servicesUnsub();
+    };
+  }, [user]);
+
+  const totalBookings = bookings.length;
+  const uniqueVendors = new Set(bookings.map((b) => b.vendorId)).size;
+  const confirmedBookings = bookings.filter(
+    (booking) => booking.status === "Confirmed"
+  ).length;
 
   const stats = [
     {
       title: "Bookings",
-      value: "12",
+      value: totalBookings,
       icon: <CalendarHeart size={24} />,
       color: "text-purple-600",
       bg: "bg-purple-50",
     },
     {
-      title: "Saved Vendors",
-      value: "8",
+      title: "Vendors Booked",
+      value: uniqueVendors,
       icon: <Heart size={24} />,
       color: "text-pink-600",
       bg: "bg-pink-50",
     },
     {
-      title: "Messages",
-      value: "24",
+      title: "Confirmed",
+      value: confirmedBookings,
       icon: <MessageSquare size={24} />,
       color: "text-blue-600",
       bg: "bg-blue-50",
     },
   ];
+
+  const welcomeName = userProfile?.fullName || "there";
+
+  if (loading) {
+    return (
+      <div className='min-h-screen flex items-center justify-center bg-[#fafafa]'>
+        <p className='text-gray-500 font-semibold'>Loading your dashboard...</p>
+      </div>
+    );
+  }
+
+  const serviceCards = featuredServices.map((service, index) => ({
+    id: service.id,
+    name: service.name || "Untitled Service",
+    category: service.category || "Service",
+    rating: service.rating || 5,
+    reviews: service.bookings || 0,
+    price: `₦${Number(service.price || 0).toLocaleString()}`,
+    location: service.location || "Nigeria",
+    image:
+      service.image ||
+      [
+        "https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&q=80&w=600",
+        "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&q=80&w=600",
+        "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&q=80&w=600",
+      ][index % 3],
+  }));
 
   return (
     <div className='min-h-screen bg-[#fafafa] flex font-sans selection:bg-purple-200'>
@@ -94,7 +195,8 @@ const Dashboard = () => {
             animate={{ opacity: 1, x: 0 }}
           >
             <h2 className='text-3xl md:text-4xl font-black text-gray-900 tracking-tight'>
-              Welcome back, <span className='text-purple-600'>Sarah</span> 👋
+              Welcome back,{" "}
+              <span className='text-purple-600'>{welcomeName}</span> 👋
             </h2>
             <p className='text-gray-500 mt-2 font-medium'>
               Here is what's happening with your events today.
@@ -107,7 +209,7 @@ const Dashboard = () => {
             className='flex items-center gap-4 w-full xl:w-auto'
           >
             {/* Search Bar */}
-            <div className='bg-white rounded-full flex items-center px-5 py-3 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 w-full xl:w-[350px] group focus-within:ring-2 focus-within:ring-purple-100 transition-all'>
+            <div className='bg-white rounded-full flex items-center px-5 py-3 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 w-full xl:w-87.5 group focus-within:ring-2 focus-within:ring-purple-100 transition-all'>
               <Search
                 size={20}
                 className='text-gray-400 group-focus-within:text-purple-600 transition-colors'
@@ -127,6 +229,15 @@ const Dashboard = () => {
           </motion.div>
         </div>
 
+        {error && (
+          <div className='mb-6 rounded-3xl border border-red-100 bg-red-50 p-5 text-red-700'>
+            <p className='font-semibold'>
+              Unable to load some dashboard items.
+            </p>
+            <p className='text-sm mt-1'>{error}</p>
+          </div>
+        )}
+
         {/* Stats Section */}
         <section className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-12'>
           {stats.map((stat, index) => (
@@ -136,7 +247,7 @@ const Dashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               whileHover={{ y: -5 }}
-              className='bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between group'
+              className='bg-white p-6 rounded-4xl shadow-sm border border-gray-100 flex items-center justify-between group'
             >
               <div>
                 <p className='text-gray-400 text-sm font-bold uppercase tracking-widest mb-1'>
@@ -171,20 +282,20 @@ const Dashboard = () => {
           </div>
 
           <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8'>
-            {vendors.map((vendor, index) => (
+            {serviceCards.map((service, index) => (
               <motion.div
-                key={vendor.id}
+                key={service.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 + 0.3 }}
                 whileHover={{ y: -8 }}
-                className='group relative bg-white rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl hover:shadow-purple-100/50 transition-all duration-500 flex flex-col'
+                className='group relative bg-white rounded-4xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl hover:shadow-purple-100/50 transition-all duration-500 flex flex-col'
               >
                 {/* Image Section */}
                 <div className='relative h-56 overflow-hidden'>
                   <img
-                    src={vendor.image}
-                    alt={vendor.name}
+                    src={service.image}
+                    alt={service.name}
                     className='w-full h-full object-cover transition-transform duration-700 group-hover:scale-110'
                   />
 
@@ -203,14 +314,14 @@ const Dashboard = () => {
                   </button>
 
                   {/* Rating Gradient */}
-                  <div className='absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/60 to-transparent' />
+                  <div className='absolute bottom-0 left-0 right-0 h-20 bg-linear-to-t from-black/60 to-transparent' />
                   <div className='absolute bottom-4 left-4 flex items-center gap-2 text-white'>
                     <div className='flex items-center gap-1 bg-purple-600 px-2 py-1 rounded-lg text-xs font-bold'>
                       <Star size={12} className='fill-white' />
-                      {vendor.rating}
+                      {service.rating}
                     </div>
                     <span className='text-xs font-medium text-gray-200'>
-                      ({vendor.reviews})
+                      ({service.reviews})
                     </span>
                   </div>
                 </div>
@@ -220,20 +331,20 @@ const Dashboard = () => {
                   <div className='flex justify-between items-start mb-2'>
                     <div>
                       <span className='text-purple-600 text-xs font-bold uppercase tracking-wider'>
-                        {vendor.category}
+                        {service.category}
                       </span>
                       <h4 className='text-xl font-bold text-gray-900 mt-1 group-hover:text-purple-600 transition-colors'>
-                        {vendor.name}
+                        {service.name}
                       </h4>
                     </div>
                     <span className='text-gray-900 font-bold text-sm bg-gray-50 px-2 py-1 rounded-lg'>
-                      {vendor.price}
+                      {service.price}
                     </span>
                   </div>
 
                   <div className='flex items-center gap-1 text-gray-500 text-sm mb-6'>
                     <MapPin size={14} />
-                    {vendor.location}
+                    {service.location}
                   </div>
 
                   {/* Action Buttons */}
