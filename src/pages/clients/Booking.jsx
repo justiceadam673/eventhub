@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar,
@@ -10,9 +10,10 @@ import {
   MoreVertical,
   Receipt,
   Search,
+  Check,
 } from "lucide-react";
-import { db } from "../../firebase"; // Adjust path as needed
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { auth, db } from "../../firebase"; // Adjust path as needed
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 
 const ClientBookingsPage = () => {
   const [bookings, setBookings] = useState([]);
@@ -20,42 +21,49 @@ const ClientBookingsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        setLoading(true);
+    const user = auth.currentUser;
 
-        // IMPORTANT: If you have user authentication, you should filter by the logged-in user's ID
-        // const q = query(collection(db, "bookings"), where("clientId", "==", currentUser.uid), orderBy("createdAt", "desc"));
+    // If no user is logged in, stop loading
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
-        // For now, fetching all bookings (Fallback query)
-        const q = query(collection(db, "bookings"));
-        const querySnapshot = await getDocs(q);
+    // Real-time listener filtering by the logged-in Client's ID
+    const q = query(
+      collection(db, "bookings"),
+      where("clientId", "==", user.uid)
+    );
 
-        const fetchedBookings = querySnapshot.docs.map((doc) => ({
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const fetchedBookings = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-
         setBookings(fetchedBookings);
-      } catch (error) {
+        setLoading(false);
+      },
+      (error) => {
         console.error("Error fetching bookings:", error);
-      } finally {
         setLoading(false);
       }
-    };
+    );
 
-    fetchBookings();
+    return () => unsubscribe();
   }, []);
 
-  // Helper function to determine status badge styling
+  // Standardized status matching what the vendor sets
   const getStatusConfig = (status) => {
     switch (status?.toLowerCase()) {
-      case "approved":
+      case "confirmed":
+      case "completed":
         return {
           bg: "bg-green-100",
           text: "text-green-700",
           icon: <CheckCircle2 size={16} />,
-          label: "Approved",
+          label: status,
         };
       case "rejected":
         return {
@@ -75,7 +83,6 @@ const ClientBookingsPage = () => {
     }
   };
 
-  // Filter bookings based on search term
   const filteredBookings = bookings.filter(
     (b) =>
       b.vendorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -84,11 +91,9 @@ const ClientBookingsPage = () => {
 
   return (
     <div className='min-h-screen bg-[#fafafa] font-sans text-gray-900 pb-20'>
-      {/* Header Background Decoration */}
-      <div className='absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-linear-to-b from-purple-100/50 to-transparent blur-[100px] pointer-events-none -z-10' />
+      <div className='absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-gradient-to-b from-purple-100/50 to-transparent blur-[100px] pointer-events-none -z-10' />
 
       <main className='max-w-7xl mx-auto p-6 lg:p-10 pt-12'>
-        {/* Page Header & Controls */}
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12'>
           <div>
             <h1 className='text-4xl font-black mb-2 text-gray-900'>
@@ -109,12 +114,11 @@ const ClientBookingsPage = () => {
               placeholder='Search by vendor or event type...'
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className='w-full bg-white border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-full py-4 pl-12 pr-6 outline-none focus:ring-2 focus:ring-purple-100 transition-all font-medium placeholder:text-gray-400'
+              className='w-full bg-white border border-gray-100 shadow-sm rounded-full py-4 pl-12 pr-6 outline-none focus:ring-2 focus:ring-purple-100 transition-all font-medium placeholder:text-gray-400'
             />
           </div>
         </div>
 
-        {/* Loading State */}
         {loading ? (
           <div className='flex flex-col items-center justify-center py-32'>
             <div className='w-12 h-12 border-4 border-gray-200 border-t-purple-600 rounded-full animate-spin' />
@@ -123,11 +127,10 @@ const ClientBookingsPage = () => {
             </p>
           </div>
         ) : filteredBookings.length === 0 ? (
-          /* Empty State */
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className='bg-white rounded-[2.5rem] p-12 text-center shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-gray-100 max-w-2xl mx-auto mt-10'
+            className='bg-white rounded-[2.5rem] p-12 text-center shadow-sm border border-gray-100 max-w-2xl mx-auto mt-10'
           >
             <div className='w-24 h-24 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-6'>
               <Receipt size={40} className='text-purple-600' />
@@ -140,7 +143,6 @@ const ClientBookingsPage = () => {
             </p>
           </motion.div>
         ) : (
-          /* Bookings Grid */
           <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
             <AnimatePresence mode='popLayout'>
               {filteredBookings.map((booking) => {
@@ -154,9 +156,8 @@ const ClientBookingsPage = () => {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.3 }}
-                    className='bg-white rounded-[2rem] p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-gray-100 flex flex-col sm:flex-row gap-6 group hover:shadow-[0_20px_50px_rgba(147,51,234,0.08)] transition-all'
+                    className='bg-white rounded-[2rem] p-6 sm:p-8 shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-6 group hover:shadow-lg transition-all'
                   >
-                    {/* Left side: Image & Status */}
                     <div className='w-full sm:w-40 shrink-0 flex flex-col gap-4'>
                       <div className='relative h-40 sm:h-32 rounded-2xl overflow-hidden bg-gray-100'>
                         {booking.vendorImage ? (
@@ -172,7 +173,6 @@ const ClientBookingsPage = () => {
                         )}
                       </div>
 
-                      {/* Dynamic Status Badge */}
                       <div
                         className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider ${status.bg} ${status.text}`}
                       >
@@ -181,12 +181,11 @@ const ClientBookingsPage = () => {
                       </div>
                     </div>
 
-                    {/* Right side: Details */}
                     <div className='flex-1 flex flex-col'>
                       <div className='flex justify-between items-start mb-2'>
                         <div>
                           <p className='text-[10px] font-black text-purple-600 uppercase tracking-widest mb-1'>
-                            {booking.eventType || "Event Booking"}
+                            {booking.service || "Event Service"}
                           </p>
                           <h3 className='text-2xl font-black text-gray-900 leading-tight'>
                             {booking.vendorName || "Unknown Vendor"}
@@ -234,7 +233,6 @@ const ClientBookingsPage = () => {
                         </div>
                       </div>
 
-                      {/* Action Button */}
                       <button className='mt-auto w-full bg-gray-50 hover:bg-gray-900 text-gray-600 hover:text-white py-3 rounded-xl text-sm font-bold transition-colors'>
                         View Full Details
                       </button>

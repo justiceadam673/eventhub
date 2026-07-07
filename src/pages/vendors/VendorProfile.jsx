@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db, auth } from "../../firebase"; // Adjust this path to your Firebase config file
 import {
   User,
   Mail,
@@ -12,30 +14,135 @@ import {
   Calendar,
   Heart,
   ShieldCheck,
+  Loader2,
 } from "lucide-react";
 
+const IMGBB_API_KEY = import.meta.env.VITE_IMGBB_API_KEY;
+
 const VendorProfile = () => {
+  const fileInputRef = useRef(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
   const [userData, setUserData] = useState({
-    fullName: "Justice Adam",
-    email: "justiceadam@gmail.com",
-    phone: "+234 812 345 6789",
-    location: "Abuja, Nigeria",
-    bio: "I love planning amazing events and connecting with trusted vendors. Currently organizing a grand wedding for December!",
+    fullName: "",
+    email: "",
+    phone: "",
+    location: "",
+    bio: "",
+    profileImage:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300", // Default fallback image
   });
+
+  // 1. Fetch user data from Firebase Firestore on load
+  useEffect(() => {
+    const fetchUserData = async () => {
+      // Using a fallback ID for local testing if user isn't logged in yet
+      const userId = auth.currentUser?.uid || "test_user_id";
+
+      try {
+        const docRef = doc(db, "vendors", userId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          setUserData(docSnap.data());
+        } else {
+          console.log("No profile found! Setting up an empty profile.");
+          // Optional: initialize with defaults if nothing exists in Firestore
+          setUserData({
+            fullName: "Justice Adam",
+            email: auth.currentUser?.email || "justiceadam@gmail.com",
+            phone: "+234 812 345 6789",
+            location: "Abuja, Nigeria",
+            bio: "I love planning amazing events and connecting with trusted vendors.",
+            profileImage:
+              "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching user data from Firestore:", error);
+      }
+    };
+
+    // If using Firebase Auth, wait for auth state to initialize before fetching
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      fetchUserData();
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleChange = (e) => {
     setUserData({ ...userData, [e.target.name]: e.target.value });
   };
 
-  const handleSave = () => {
-    // Add logic here to sync with a backend
-    setIsEditing(false);
+  // 2. Handle Image Selection & Upload to ImgBB
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUploading(true);
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      const response = await fetch(
+        `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Update local state with the new ImgBB hosted URL
+        setUserData((prevData) => ({
+          ...prevData,
+          profileImage: result.data.url,
+        }));
+      } else {
+        console.error("ImgBB upload error:", result.error?.message);
+        alert(`Upload failed: ${result.error?.message}`);
+      }
+    } catch (error) {
+      console.error("Error uploading image to ImgBB:", error);
+      alert("Something went wrong while uploading your image.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // 3. Save Form & Image Data to Firebase Firestore
+  const handleSave = async () => {
+    setIsSaving(true);
+    const userId = auth.currentUser?.uid || "test_user_id";
+
+    try {
+      await setDoc(doc(db, "vendors", userId), userData, { merge: true });
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error updating profile in Firestore:", error);
+      alert("Failed to save changes. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <div className='min-h-screen bg-[#fafafa] font-sans text-gray-900 pb-12'>
-      {/* Decorative Background Accent */}
+      {/* Hidden File Input for Image Upload */}
+      <input
+        type='file'
+        ref={fileInputRef}
+        onChange={handleImageChange}
+        accept='image/*'
+        className='hidden'
+      />
+
       <div className='absolute top-0 left-0 w-full h-[400px] bg-gradient-to-b from-purple-50 to-transparent -z-10' />
 
       <main className='max-w-5xl mx-auto p-4 md:p-10'>
@@ -57,6 +164,7 @@ const VendorProfile = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setIsEditing(!isEditing)}
+            disabled={isSaving || isUploading}
             className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold transition-all shadow-sm ${
               isEditing
                 ? "bg-white text-gray-500 border border-gray-200"
@@ -84,19 +192,28 @@ const VendorProfile = () => {
             {/* Profile Image Overlapping Banner */}
             <div className='absolute -bottom-16 left-10'>
               <div className='relative group'>
-                <div className='w-36 h-36 rounded-[2.5rem] bg-white p-1.5 shadow-xl'>
+                <div className='w-36 h-36 rounded-[2.5rem] bg-white p-1.5 shadow-xl flex items-center justify-center overflow-hidden relative'>
                   <img
-                    src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300'
+                    src={userData.profileImage}
                     alt='profile'
-                    className='w-full h-full rounded-[2.2rem] object-cover'
+                    className={`w-full h-full rounded-[2.2rem] object-cover ${isUploading ? "opacity-40" : "opacity-100"}`}
                   />
+                  {isUploading && (
+                    <div className='absolute inset-0 flex items-center justify-center'>
+                      <Loader2
+                        size={32}
+                        className='animate-spin text-purple-600'
+                      />
+                    </div>
+                  )}
                 </div>
                 <AnimatePresence>
-                  {isEditing && (
+                  {isEditing && !isUploading && (
                     <motion.button
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       exit={{ scale: 0 }}
+                      onClick={() => fileInputRef.current.click()}
                       className='absolute bottom-2 right-2 bg-purple-600 text-white p-3 rounded-2xl shadow-lg hover:bg-gray-900 transition-colors border-4 border-white'
                     >
                       <Camera size={20} />
@@ -112,18 +229,17 @@ const VendorProfile = () => {
             <div className='flex flex-col xl:flex-row xl:items-center justify-between gap-8 border-b border-gray-50 pb-10 mb-10'>
               <div>
                 <div className='flex items-center gap-2 mb-1'>
-                  <h3 className='text-3xl font-black text-gray-900'>
-                    {userData.fullName}
+                  <h3 className='text-3xl font-black text-gray-900 min-h-[40px]'>
+                    {userData.fullName || "Loading..."}
                   </h3>
                   <ShieldCheck size={24} className='text-purple-600' />
                 </div>
                 <p className='text-gray-500 font-bold flex items-center gap-2'>
                   <span className='w-2 h-2 bg-green-500 rounded-full animate-pulse' />
-                  Premium Client
+                  Premium Vendor
                 </p>
               </div>
 
-              {/* Mini Stats (Interesting Touch) */}
               <div className='flex gap-4 md:gap-8'>
                 <div className='text-center'>
                   <p className='text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1'>
@@ -146,7 +262,6 @@ const VendorProfile = () => {
 
             {/* Form Section */}
             <div className='grid md:grid-cols-2 gap-8'>
-              {/* Field Wrapper Component would be cleaner, but keeping it inline for your ease */}
               {[
                 {
                   label: "Full Name",
@@ -190,7 +305,7 @@ const VendorProfile = () => {
                     <input
                       type={field.type}
                       name={field.name}
-                      value={field.value}
+                      value={field.value || ""}
                       onChange={handleChange}
                       disabled={!isEditing}
                       className={`w-full rounded-2xl pl-12 pr-4 py-4 outline-none font-bold transition-all border-2 ${
@@ -211,7 +326,7 @@ const VendorProfile = () => {
                 <textarea
                   rows='4'
                   name='bio'
-                  value={userData.bio}
+                  value={userData.bio || ""}
                   onChange={handleChange}
                   disabled={!isEditing}
                   className={`w-full rounded-2xl px-5 py-4 outline-none font-bold transition-all border-2 resize-none ${
@@ -234,10 +349,20 @@ const VendorProfile = () => {
                 >
                   <button
                     onClick={handleSave}
-                    className='flex-1 md:flex-none bg-gray-900 hover:bg-purple-600 text-white px-10 py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 shadow-xl shadow-gray-200 hover:shadow-purple-200'
+                    disabled={isSaving || isUploading}
+                    className='flex-1 md:flex-none bg-gray-900 hover:bg-purple-600 text-white px-10 py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 shadow-xl shadow-gray-200 hover:shadow-purple-200 disabled:opacity-50 disabled:cursor-not-allowed'
                   >
-                    <CheckCircle2 size={20} />
-                    Save All Changes
+                    {isSaving ? (
+                      <>
+                        <Loader2 size={20} className='animate-spin' />
+                        Saving Changes...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 size={20} />
+                        Save All Changes
+                      </>
+                    )}
                   </button>
                 </motion.div>
               )}
@@ -245,7 +370,7 @@ const VendorProfile = () => {
           </div>
         </div>
 
-        {/* Security / Extra Links Area */}
+        {/* Security Info Area */}
         <div className='mt-8 grid md:grid-cols-3 gap-6'>
           <div className='bg-white p-6 rounded-3xl border border-gray-100 flex items-center gap-4 hover:shadow-lg transition-all cursor-pointer group'>
             <div className='bg-blue-50 text-blue-600 p-3 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all'>
@@ -258,7 +383,6 @@ const VendorProfile = () => {
               </p>
             </div>
           </div>
-          {/* Add more cards for Billing, Notifications etc. */}
         </div>
       </main>
     </div>
