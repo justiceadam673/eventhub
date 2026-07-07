@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Added useNavigate here
 import {
   Sparkles,
   User,
   Briefcase,
   Mail,
   Lock,
-  Phone,
   ChevronRight,
   Store,
   Tag,
@@ -19,6 +18,7 @@ import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase"; // adjust path if needed
 
 const Signup = () => {
+  const navigate = useNavigate(); // Initialized the navigation hook
   const [role, setRole] = useState("buyer");
   const [loading, setLoading] = useState(false);
 
@@ -72,9 +72,12 @@ const Signup = () => {
         });
       }
 
-      // 4. Redirect based on role
-      window.location.href =
-        role === "vendor" ? "/vendor/dashboard" : "/dashboard";
+      // 4. Smooth client-side redirect based on role (Fixed to eliminate 404s)
+      if (role === "vendor") {
+        navigate("/vendor/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (error) {
       console.error(error.message);
       alert(error.message);
