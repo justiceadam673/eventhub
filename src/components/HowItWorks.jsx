@@ -100,9 +100,9 @@ const HowItWorks = () => {
           transition={{ delay: 0.8 }}
           className='mt-20 text-center'
         >
-          <button className='bg-gray-900 text-white px-10 py-4 rounded-full font-bold shadow-xl hover:bg-purple-600 transition-all hover:scale-105 active:scale-95'>
+          {/* <button className='bg-gray-900 text-white px-10 py-4 rounded-full font-bold shadow-xl hover:bg-purple-600 transition-all hover:scale-105 active:scale-95'>
             Start Planning Now
-          </button>
+          </button> */}
         </motion.div>
       </div>
     </section>

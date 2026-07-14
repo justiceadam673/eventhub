@@ -46,13 +46,13 @@ const Categories = () => {
           </h2>
         </div>
 
-        <button className='flex items-center gap-2 text-gray-500 font-semibold hover:text-purple-600 transition-colors group'>
+        {/* <button className='flex items-center gap-2 text-gray-500 font-semibold hover:text-purple-600 transition-colors group'>
           View all categories
           <ArrowRight
             size={20}
             className='group-hover:translate-x-1 transition-transform'
           />
-        </button>
+        </button> */}
       </div>
 
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8'>

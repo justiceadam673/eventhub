@@ -119,17 +119,17 @@ const Hero = () => {
           variants={itemVariants}
           className='mt-10 flex flex-wrap items-center justify-center gap-6'
         >
-          <button className='group flex items-center gap-2 text-white font-bold hover:text-purple-600 transition-colors'>
+          {/* <button className='group flex items-center gap-2 text-white font-bold hover:text-purple-600 transition-colors'>
             Explore All Vendors
             <ArrowRight
               size={18}
               className='group-hover:translate-x-1 transition-transform'
             />
-          </button>
-          <div className='h-1 w-1 rounded-full bg-pink-500 hidden sm:block' />
-          <button className='text-purple-100 font-medium hover:underline decoration-purple-300 underline-offset-4'>
+          </button> */}
+          {/* <div className='h-1 w-1 rounded-full bg-pink-500 hidden sm:block' /> */}
+          {/* <button className='text-purple-100 font-medium hover:underline decoration-purple-300 underline-offset-4'>
             Are you a vendor? Join us
-          </button>
+          </button> */}
         </motion.div>
       </motion.div>
     </section>

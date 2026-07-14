@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom"; // Fixed: Added curly braces to correct the import
 import { Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
 
 const CTA = () => {
@@ -56,21 +57,26 @@ const CTA = () => {
 
           {/* Primary Action */}
           <div className='flex flex-col sm:flex-row gap-4'>
-            <motion.button
-              whileHover={{
-                scale: 1.05,
-                boxShadow: "0 20px 25px -5px rgb(147 51 234 / 0.3)",
-              }}
-              whileTap={{ scale: 0.95 }}
-              className='bg-purple-600 hover:bg-purple-500 text-white px-10 py-5 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all'
-            >
-              Get Started for Free
-              <ArrowRight size={20} />
-            </motion.button>
+            <Link to='/signup'>
+              <motion.button
+                whileHover={{
+                  scale: 1.05,
+                  boxShadow: "0 20px 25px -5px rgb(147 51 234 / 0.3)",
+                }}
+                whileTap={{ scale: 0.95 }}
+                className='bg-purple-600 hover:bg-purple-500 text-white px-10 py-5 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all w-full sm:w-auto'
+              >
+                Get Started for Free
+                <ArrowRight size={20} />
+              </motion.button>
+            </Link>
 
-            <button className='px-10 py-5 text-white font-bold hover:bg-white/5 rounded-full transition-all'>
-              Talk to Sales
-            </button>
+            {/* Now navigates smoothly to the signup page with exact same styling */}
+            {/* <Link to='/signup'>
+              <button className='px-10 py-5 text-white font-bold hover:bg-white/5 rounded-full transition-all w-full sm:w-auto'>
+                Talk to Sales
+              </button>
+            </Link> */}
           </div>
         </div>
       </motion.div>
