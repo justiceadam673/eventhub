@@ -582,7 +582,6 @@ import {
   Search,
   MapPin,
   Star,
-  Heart,
   SlidersHorizontal,
   X,
   ChevronLeft,
@@ -592,17 +591,44 @@ import {
   Globe,
   Clock,
   Briefcase,
+  MessageSquare,
+  Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import { auth, db } from "../../firebase";
 import {
   collection,
   getDocs,
+  getDoc,
+  doc,
   addDoc,
   serverTimestamp,
 } from "firebase/firestore";
 
+// Helper to handle contacting vendor via WhatsApp or Email
+const handleContactVendor = (service) => {
+  const phone = service.phone || service.vendorPhone;
+  if (phone) {
+    const cleanPhone = String(phone).replace(/[^0-9]/g, "");
+    const message = encodeURIComponent(
+      `Hello! I found your service "${service.serviceName}" on the platform and would like to inquire about booking.`
+    );
+    window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank");
+  } else if (service.email) {
+    window.open(
+      `mailto:${service.email}?subject=Inquiry regarding ${service.serviceName}`,
+      "_blank"
+    );
+  } else {
+    alert("Vendor has not provided contact details yet.");
+  }
+};
+
 // Service Detail Overlay Component
 const ServiceProfileOverlay = ({ service, isOpen, onClose }) => {
+  const [isBooking, setIsBooking] = useState(false);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
+
   if (!isOpen || !service) return null;
 
   const handleBook = async () => {
@@ -612,29 +638,67 @@ const ServiceProfileOverlay = ({ service, isOpen, onClose }) => {
         return;
       }
 
-      const clientId = auth.currentUser.uid;
-      const clientName =
-        auth.currentUser.displayName || auth.currentUser.email || "Client";
+      setIsBooking(true);
 
+      const currentUser = auth.currentUser;
+      let clientName = currentUser.displayName || currentUser.email || "Client";
+      let clientPhone = currentUser.phoneNumber || "";
+
+      // Fetch user profile info from Firestore for consistency with Dashboard
+      try {
+        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        if (userDoc.exists()) {
+          const uData = userDoc.data();
+          clientName = uData.fullName || uData.name || clientName;
+          clientPhone = uData.phoneNumber || uData.phone || clientPhone;
+        }
+      } catch (err) {
+        console.warn("Could not fetch extra user profile info:", err);
+      }
+
+      // Extract numeric or string price for consistency
+      const rawPrice = service.pricing || service.price || 0;
+
+      // Write complete booking record aligned with Dashboard & My Bookings schema
       await addDoc(collection(db, "bookings"), {
+        // Client Information
+        clientId: currentUser.uid,
+        clientName: clientName,
+        clientEmail: currentUser.email || "",
+        clientPhone: clientPhone,
+
+        // Vendor Information
+        vendorId: service.vendorId || service.uid || "unknown_vendor",
+        vendorName: service.vendorName || "Unknown Vendor",
+        vendorEmail: service.email || service.vendorEmail || "",
+        vendorPhone: service.phone || service.vendorPhone || "",
+        vendorImage: service.image || "",
+
+        // Service & Pricing Information
         serviceId: service.id || null,
-        serviceName: service.serviceName || service.title || "",
-        vendorId: service.vendorId || "",
-        vendorName: service.vendorName || "",
-        clientId,
-        clientName,
-        amount: service.pricing || null,
-        location: service.location || "",
+        service: service.serviceName || service.category || "Service",
+        serviceCategory: service.category || "General",
+        totalPrice: rawPrice,
+        location: service.location || "Nigeria",
+        date: "To be confirmed via chat",
+
+        // Status & Timestamps
         status: "Pending",
         createdAt: serverTimestamp(),
       });
 
-      alert("Booking submitted — the vendor will be notified.");
-      onClose();
+      setBookingSuccess(true);
     } catch (err) {
       console.error("Booking failed:", err);
-      alert("Failed to submit booking. Try again.");
+      alert("Failed to submit booking. Please try again.");
+    } finally {
+      setIsBooking(false);
     }
+  };
+
+  const handleModalClose = () => {
+    setBookingSuccess(false);
+    onClose();
   };
 
   return (
@@ -643,25 +707,25 @@ const ServiceProfileOverlay = ({ service, isOpen, onClose }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        onClick={onClose}
+        onClick={handleModalClose}
         className='fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4'
       >
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
+          initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
+          exit={{ scale: 0.95, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className='bg-white rounded-4xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative'
+          className='bg-white rounded-4xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative shadow-2xl'
         >
           {/* Close Button */}
           <button
-            onClick={onClose}
-            className='absolute top-4 right-4 z-20 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition'
+            onClick={handleModalClose}
+            className='absolute top-4 right-4 z-20 p-2 bg-white/90 backdrop-blur-md rounded-full shadow-lg hover:bg-gray-100 transition cursor-pointer'
           >
             <X size={24} className='text-gray-600' />
           </button>
 
-          {/* Header Image (ImgBB link) */}
+          {/* Header Image */}
           <div className='relative h-80 overflow-hidden'>
             {service.image ? (
               <img
@@ -674,11 +738,11 @@ const ServiceProfileOverlay = ({ service, isOpen, onClose }) => {
                 <Briefcase size={64} />
               </div>
             )}
-            <div className='absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-gray-900/80 to-transparent' />
+            <div className='absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-gray-900/80 to-transparent' />
             <div className='absolute bottom-4 left-6 flex items-center gap-2'>
-              <div className='flex items-center gap-1 bg-white text-gray-900 px-3 py-2 rounded-lg font-bold shadow-sm'>
+              <div className='flex items-center gap-1 bg-white text-gray-900 px-3 py-1.5 rounded-lg font-bold shadow-sm text-sm'>
                 <Star size={16} className='fill-yellow-400 text-yellow-400' />
-                {service.rating || "N/A"}
+                {service.rating > 0 ? service.rating : "0"}
               </div>
               <span className='text-white text-sm font-medium drop-shadow-md'>
                 ({service.reviews || 0} reviews)
@@ -790,15 +854,43 @@ const ServiceProfileOverlay = ({ service, isOpen, onClose }) => {
               </div>
             )}
 
+            {/* Success Feedback Alert */}
+            {bookingSuccess && (
+              <div className='mb-6 p-4 rounded-2xl bg-green-50 border border-green-200 text-green-700 flex items-center gap-3'>
+                <CheckCircle2 size={24} className='shrink-0' />
+                <div className='text-sm'>
+                  <p className='font-bold'>Service successfully booked!</p>
+                  <p className='text-xs opacity-90'>
+                    Check your "My Bookings" page to track its status.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className='flex gap-3 sticky bottom-0 bg-white pt-4 border-t'>
               <button
+                disabled={isBooking || bookingSuccess}
                 onClick={handleBook}
-                className='flex-1 bg-purple-600 hover:bg-purple-700 text-white px-6 py-4 rounded-xl font-bold transition-all shadow-lg'
+                className='flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white px-6 py-4 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer'
               >
-                Book Now
+                {isBooking ? (
+                  <>
+                    <Loader2 size={20} className='animate-spin' />
+                    Processing...
+                  </>
+                ) : bookingSuccess ? (
+                  "Booked Successfully ✓"
+                ) : (
+                  "Book Service Now"
+                )}
               </button>
-              <button className='flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 px-6 py-4 rounded-xl font-bold transition-all'>
+
+              <button
+                onClick={() => handleContactVendor(service)}
+                className='flex-1 bg-green-50 hover:bg-green-100 text-green-700 px-6 py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 cursor-pointer'
+              >
+                <MessageSquare size={18} />
                 Contact Vendor
               </button>
             </div>
@@ -812,7 +904,6 @@ const ServiceProfileOverlay = ({ service, isOpen, onClose }) => {
 const ExploreVendors = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
-  const [savedServices, setSavedServices] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState(null);
@@ -828,63 +919,91 @@ const ExploreVendors = () => {
     "Makeup",
   ];
 
-  // Fetch both services and matching vendor profiles from Firestore
+  // Fetch services, vendor details, and calculate dynamic ratings from reviews
   useEffect(() => {
     const fetchServicesAndVendors = async () => {
       try {
         setLoading(true);
 
-        // Fetch both collections simultaneously for optimal client-side loading speed
-        const [servicesSnapshot, vendorsSnapshot] = await Promise.all([
-          getDocs(collection(db, "services")),
-          getDocs(collection(db, "vendors")),
-        ]);
+        const [servicesSnapshot, vendorsSnapshot, reviewsSnapshot] =
+          await Promise.all([
+            getDocs(collection(db, "services")),
+            getDocs(collection(db, "vendors")),
+            getDocs(collection(db, "reviews")),
+          ]);
 
-        // Build a micro-cache dictionary lookup map of vendors: { [vendorDocId]: businessName }
+        // Map vendor profiles
         const vendorsMap = {};
         vendorsSnapshot.docs.forEach((doc) => {
-          const vendorData = doc.data();
-          vendorsMap[doc.id] =
-            vendorData.businessName || vendorData.name || "Unknown Vendor";
+          const vData = doc.data();
+          vendorsMap[doc.id] = {
+            name: vData.businessName || vData.name || "Unknown Vendor",
+            location:
+              vData.location || vData.city || vData.state || "Location N/A",
+            phone: vData.phoneNumber || vData.phone || "",
+            email: vData.email || "",
+          };
+        });
+
+        // Compute dynamic reviews and average rating per vendor / service
+        const ratingsMap = {};
+        reviewsSnapshot.docs.forEach((doc) => {
+          const rev = doc.data();
+          const targetId = rev.vendorId || rev.serviceId;
+          if (targetId) {
+            if (!ratingsMap[targetId]) {
+              ratingsMap[targetId] = { total: 0, count: 0 };
+            }
+            ratingsMap[targetId].total += Number(rev.rating) || 0;
+            ratingsMap[targetId].count += 1;
+          }
         });
 
         const servicesList = servicesSnapshot.docs.map((doc) => {
           const data = doc.data();
-
-          // Identifies standard database relational link keys back to the vendor record
           const assignedVendorId =
             data.vendorId || data.uid || data.vendorRef || "";
 
-          // Extracts business name dynamically from matching vendor dictionary key
-          const linkedVendorName =
-            vendorsMap[assignedVendorId] || "Unknown Vendor";
+          const vendorMeta = vendorsMap[assignedVendorId] || {
+            name: "Unknown Vendor",
+            location: "Location N/A",
+            phone: "",
+            email: "",
+          };
+
+          // Calculate dynamic rating (vendor level or service level)
+          const ratingData = ratingsMap[assignedVendorId] || ratingsMap[doc.id];
+          const calculatedAvg =
+            ratingData && ratingData.count > 0
+              ? (ratingData.total / ratingData.count).toFixed(1)
+              : 0;
+          const reviewCount = ratingData ? ratingData.count : 0;
 
           return {
             vendorId: assignedVendorId,
             id: doc.id,
             serviceName:
               data.serviceName || data.title || data.name || "Untitled Service",
-            vendorName: linkedVendorName, // Dynamically sourced from the "vendors" collection snapshot mapping
-            location: data.location || "Location N/A",
+            vendorName: vendorMeta.name,
+            location:
+              data.location && data.location !== "Location N/A"
+                ? data.location
+                : vendorMeta.location,
             image: data.image || data.imageUrl || "",
             category: data.category || "Other",
-            email: data.email || "",
-            phone: data.phone || "",
+            email: data.email || vendorMeta.email || "",
+            phone: data.phone || vendorMeta.phone || "",
             description: data.description || "",
             pricing: data.pricing || data.price || "Contact for Price",
             approved: data.approved || false,
-            rating: data.rating || "N/A",
-            reviews: data.reviews || 0,
+            rating: calculatedAvg,
+            reviews: reviewCount,
             availability: data.availability || "",
           };
         });
 
         setServices(servicesList);
         setCurrentPage(1);
-        console.log(
-          "Fetched Services with Associated Vendor Names:",
-          servicesList
-        );
       } catch (error) {
         console.error("Error cross-fetching data models:", error);
         setServices([]);
@@ -896,7 +1015,7 @@ const ExploreVendors = () => {
     fetchServicesAndVendors();
   }, []);
 
-  // Filter combined data over Service details, Vendor names, and Locations
+  // Filter combined data
   const filteredServices = useMemo(() => {
     return services.filter((service) => {
       const matchesCategory =
@@ -910,7 +1029,7 @@ const ExploreVendors = () => {
     });
   }, [selectedCategory, searchQuery, services]);
 
-  // Pagination Configuration
+  // Pagination
   const totalPages = Math.ceil(filteredServices.length / SERVICES_PER_PAGE);
   const startIndex = (currentPage - 1) * SERVICES_PER_PAGE;
   const paginatedServices = filteredServices.slice(
@@ -928,12 +1047,6 @@ const ExploreVendors = () => {
     setCurrentPage(1);
   };
 
-  const toggleSave = (id) => {
-    setSavedServices((prev) =>
-      prev.includes(id) ? prev.filter((sId) => sId !== id) : [...prev, id]
-    );
-  };
-
   return (
     <div className='min-h-screen bg-[#fafafa] font-sans text-gray-900 pb-20'>
       {/* Detail Overlay View */}
@@ -943,7 +1056,7 @@ const ExploreVendors = () => {
         onClose={() => setSelectedService(null)}
       />
 
-      <div className='absolute top-0 left-1/2 -translate-x-1/2 w-200 h-100 bg-linear-to-b from-purple-100/50 to-transparent blur-[100px] pointer-events-none -z-10' />
+      <div className='absolute top-0 left-1/2 -translate-x-1/2 w-200 h-100 bg-gradient-to-b from-purple-100/50 to-transparent blur-[100px] pointer-events-none -z-10' />
 
       <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10'>
         {loading && (
@@ -988,7 +1101,7 @@ const ExploreVendors = () => {
                     <button
                       key={category}
                       onClick={() => handleCategoryChange(category)}
-                      className={`whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 ${
+                      className={`whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 cursor-pointer ${
                         selectedCategory === category
                           ? "bg-gray-900 text-white shadow-md shadow-gray-200"
                           : "bg-transparent text-gray-500 hover:bg-gray-100 hover:text-gray-900"
@@ -998,7 +1111,7 @@ const ExploreVendors = () => {
                     </button>
                   ))}
 
-                  <button className='ml-auto flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 text-sm font-bold transition-colors'>
+                  <button className='ml-auto flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 text-sm font-bold transition-colors cursor-pointer'>
                     <SlidersHorizontal size={16} />
                     More Filters
                   </button>
@@ -1038,7 +1151,7 @@ const ExploreVendors = () => {
                     handleSearchChange("");
                     handleCategoryChange("All");
                   }}
-                  className='mt-6 text-purple-600 font-bold hover:underline underline-offset-4'
+                  className='mt-6 text-purple-600 font-bold hover:underline underline-offset-4 cursor-pointer'
                 >
                   Clear all filters
                 </button>
@@ -1060,7 +1173,7 @@ const ExploreVendors = () => {
                         key={service.id}
                         className='group bg-white rounded-4xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-purple-100/40 border border-gray-100 transition-all duration-500 flex flex-col h-full'
                       >
-                        {/* ImgBB Card Preview Image Wrapper */}
+                        {/* Card Image Wrapper */}
                         <div
                           onClick={() => setSelectedService(service)}
                           className='relative h-60 overflow-hidden cursor-pointer'
@@ -1082,33 +1195,15 @@ const ExploreVendors = () => {
                             {service.category}
                           </div>
 
-                          {/* Bookmark Button */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleSave(service.id);
-                            }}
-                            className='absolute top-4 right-4 p-3 bg-white/90 backdrop-blur-md rounded-full text-gray-400 hover:text-pink-500 hover:scale-110 transition-all shadow-sm z-10'
-                          >
-                            <Heart
-                              size={18}
-                              className={`transition-colors ${
-                                savedServices.includes(service.id)
-                                  ? "fill-pink-500 text-pink-500"
-                                  : "hover:fill-pink-500"
-                              }`}
-                            />
-                          </button>
-
-                          {/* Linear Overlay Gradient */}
-                          <div className='absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-gray-900/80 to-transparent pointer-events-none' />
+                          {/* Rating Overlay */}
+                          <div className='absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-gray-900/80 to-transparent pointer-events-none' />
                           <div className='absolute bottom-4 left-4 flex items-center gap-2'>
                             <div className='flex items-center gap-1 bg-white text-gray-900 px-2 py-1 rounded-lg text-sm font-bold shadow-sm'>
                               <Star
                                 size={14}
                                 className='fill-yellow-400 text-yellow-400'
                               />
-                              {service.rating || "N/A"}
+                              {service.rating > 0 ? service.rating : "0"}
                             </div>
                             <span className='text-white text-xs font-medium drop-shadow-md'>
                               ({service.reviews || 0} reviews)
@@ -1116,7 +1211,7 @@ const ExploreVendors = () => {
                           </div>
                         </div>
 
-                        {/* Text Metrics Content Block */}
+                        {/* Content Block */}
                         <div className='p-6 flex flex-col flex-1'>
                           <span className='text-xs font-bold text-purple-600 uppercase tracking-wider mb-1'>
                             {service.vendorName}
@@ -1134,7 +1229,7 @@ const ExploreVendors = () => {
                             {service.location}
                           </div>
 
-                          {/* Base Pricing Context Row */}
+                          {/* Pricing & Detail Action */}
                           <div className='mt-auto pt-6 border-t border-gray-100 flex items-center justify-between'>
                             <div>
                               <p className='text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1'>
@@ -1147,7 +1242,7 @@ const ExploreVendors = () => {
 
                             <button
                               onClick={() => setSelectedService(service)}
-                              className='bg-gray-900 hover:bg-purple-600 text-white px-6 py-3 rounded-2xl text-sm font-bold transition-all hover:shadow-lg hover:shadow-purple-200 hover:-translate-y-0.5'
+                              className='bg-gray-900 hover:bg-purple-600 text-white px-6 py-3 rounded-2xl text-sm font-bold transition-all hover:shadow-lg hover:shadow-purple-200 hover:-translate-y-0.5 cursor-pointer'
                             >
                               View Details
                             </button>
@@ -1158,7 +1253,7 @@ const ExploreVendors = () => {
                   </AnimatePresence>
                 </motion.section>
 
-                {/* Pagination Controls Footer navigation */}
+                {/* Pagination Controls */}
                 {totalPages > 1 && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -1170,7 +1265,7 @@ const ExploreVendors = () => {
                         setCurrentPage(Math.max(1, currentPage - 1))
                       }
                       disabled={currentPage === 1}
-                      className='flex items-center gap-2 px-4 py-3 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold'
+                      className='flex items-center gap-2 px-4 py-3 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold cursor-pointer'
                     >
                       <ChevronLeft size={18} />
                       Previous
@@ -1182,7 +1277,7 @@ const ExploreVendors = () => {
                           <button
                             key={page}
                             onClick={() => setCurrentPage(page)}
-                            className={`w-10 h-10 rounded-lg font-bold transition-all ${
+                            className={`w-10 h-10 rounded-lg font-bold transition-all cursor-pointer ${
                               currentPage === page
                                 ? "bg-purple-600 text-white shadow-lg"
                                 : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
@@ -1199,7 +1294,7 @@ const ExploreVendors = () => {
                         setCurrentPage(Math.min(totalPages, currentPage + 1))
                       }
                       disabled={currentPage === totalPages}
-                      className='flex items-center gap-2 px-4 py-3 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold'
+                      className='flex items-center gap-2 px-4 py-3 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold cursor-pointer'
                     >
                       Next
                       <ChevronRight size={18} />
